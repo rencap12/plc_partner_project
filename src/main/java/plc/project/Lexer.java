@@ -191,12 +191,25 @@ public final class Lexer {
     }
 
     public Token lexOperator() {
+        // Check for multi-character operators first
+        if (peek("!=")) {
+            chars.advance(); // Consume '!'
+            chars.advance(); // Consume '='
+            return chars.emit(Token.Type.OPERATOR);
+        }
+
+        if (peek("==")) {
+            chars.advance(); // Consume '='
+            chars.advance(); // Consume '='
+            return chars.emit(Token.Type.OPERATOR);
+        }
+
+        // Now check for single-character operators
         if (match("[!@#$%^&*()+=\\-/]")) {
             return chars.emit(Token.Type.OPERATOR);
-        } else {
-            throw new ParseException("Invalid operator", chars.index);
         }
-        //throw new UnsupportedOperationException(); //TODO
+
+        throw new ParseException("Invalid operator", chars.index);
     }
 
     /**
