@@ -118,6 +118,7 @@ public class LexerTests {
         return Stream.of(
                 Arguments.of("Character", "(", true),
                 Arguments.of("Comparison", "!=", true),
+                Arguments.of("equal equal", "==",  true),
                 Arguments.of("Space", " ", false),
                 Arguments.of("Tab", "\t", false)
         );

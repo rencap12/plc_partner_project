@@ -45,7 +45,6 @@ public final class Lexer {
         }
 
         return tokens;
-        // throw new UnsupportedOperationException(); //TODO
     }
 
     /**
@@ -57,21 +56,35 @@ public final class Lexer {
      * by {@link #lex()}
      */
     public Token lexToken() {
-        if (peek("[A-Za-z_]")) {
+//        if (peek("[A-Za-z_]")) {
+//            return lexIdentifier();
+//        } else if (peek("[0-9+-]")) {
+//            return lexNumber();
+//        } else if (peek("'")) {
+//            return lexCharacter();
+//        } else if (peek("\"")) {
+//            return lexString();
+//        } else if (peek("[!@#$%^&*()=<>+/-]")) {
+//            return lexOperator();
+//        } else {
+//            throw new ParseException("Unknown token", chars.index);
+//        }
+        // Check for multi-character operators first
+        if (peek("!=") || peek("==")) {
+            return lexOperator(); // Handle this in lexOperator()
+        } else if (peek("[A-Za-z_]")) {
             return lexIdentifier();
-        } else if (peek("[0-9+-]")) {
+        } else if (peek("[0-9]") || peek("-")) { // Include negative sign for numbers
             return lexNumber();
         } else if (peek("'")) {
             return lexCharacter();
         } else if (peek("\"")) {
             return lexString();
         } else if (peek("[!@#$%^&*()=<>+/-]")) {
-            return lexOperator();
+            return lexOperator(); // Handle single-character operators
         } else {
             throw new ParseException("Unknown token", chars.index);
         }
-
-        // throw new UnsupportedOperationException(); //TODO
     }
 
     public Token lexIdentifier() {
@@ -82,7 +95,6 @@ public final class Lexer {
             // Keep matching valid identifier characters
         }
         return chars.emit(Token.Type.IDENTIFIER);
-        // throw new UnsupportedOperationException(); //TODO
     }
 
     public Token lexNumber() {
@@ -155,7 +167,6 @@ public final class Lexer {
 
         // Emit the character token
         return chars.emit(Token.Type.CHARACTER);
-        //throw new UnsupportedOperationException(); //TODO
     }
 
     public Token lexString() {
@@ -176,7 +187,6 @@ public final class Lexer {
         }
 
         return chars.emit(Token.Type.STRING);
-        //throw new UnsupportedOperationException(); //TODO
     }
 
     public void lexEscape() {
@@ -187,21 +197,26 @@ public final class Lexer {
         } else {
             throw new ParseException("Expected escape sequence after backslash", chars.index);
         }
-        //throw new UnsupportedOperationException(); //TODO
     }
 
     public Token lexOperator() {
         // Check for multi-character operators first
-        if (peek("!=")) {
+        if (peek("!")) {
             chars.advance(); // Consume '!'
-            chars.advance(); // Consume '='
-            return chars.emit(Token.Type.OPERATOR);
+            if (peek("=")) {
+                chars.advance(); // Consume '='}
+                return chars.emit(Token.Type.OPERATOR);
+            }
+            return chars.emit(Token.Type.OPERATOR); // bang!
         }
 
-        if (peek("==")) {
+        if (peek("=")) {
             chars.advance(); // Consume '='
-            chars.advance(); // Consume '='
-            return chars.emit(Token.Type.OPERATOR);
+            if (peek("=")){
+                chars.advance(); // Consume '='
+                return chars.emit(Token.Type.OPERATOR);
+            }
+            return chars.emit(Token.Type.OPERATOR); // just =
         }
 
         // Now check for single-character operators
@@ -224,7 +239,6 @@ public final class Lexer {
             }
         }
         return true;
-        //throw new UnsupportedOperationException(); //TODO (in Lecture)
     }
 
     /**
@@ -240,7 +254,6 @@ public final class Lexer {
             }
         }
         return peek;
-        //throw new UnsupportedOperationException(); //TODO (in Lecture)
     }
 
     /**
@@ -272,6 +285,8 @@ public final class Lexer {
         public void advance() {
             index++;
             length++;
+            System.out.println("Updated length: " + length);  // Log the updated length
+
         }
 
         public void skip() {
