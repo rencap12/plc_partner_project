@@ -40,9 +40,9 @@ public final class Lexer {
                 tokens.add(lexToken());
             }
         }
-        for (Token token: tokens){
-            System.out.println("token:" + token.toString());
-        }
+//        for (Token token: tokens){
+//            System.out.println("token:" + token.toString());
+//        }
 
         return tokens;
     }
@@ -56,20 +56,6 @@ public final class Lexer {
      * by {@link #lex()}
      */
     public Token lexToken() {
-//        if (peek("[A-Za-z_]")) {
-//            return lexIdentifier();
-//        } else if (peek("[0-9+-]")) {
-//            return lexNumber();
-//        } else if (peek("'")) {
-//            return lexCharacter();
-//        } else if (peek("\"")) {
-//            return lexString();
-//        } else if (peek("[!@#$%^&*()=<>+/-]")) {
-//            return lexOperator();
-//        } else {
-//            throw new ParseException("Unknown token", chars.index);
-//        }
-        // Check for multi-character operators first
         if (peek("!=") || peek("==")) {
             return lexOperator(); // Handle this in lexOperator()
         } else if (peek("[A-Za-z_]")) {
@@ -285,7 +271,7 @@ public final class Lexer {
         public void advance() {
             index++;
             length++;
-            System.out.println("Updated length: " + length);  // Log the updated length
+          //  System.out.println("Updated length: " + length);  // Log the updated length
 
         }
 
