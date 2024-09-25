@@ -34,6 +34,7 @@ public final class Lexer {
         while(chars.has(0)) {
             while(peek("[ \b\n\r\t]")){
                 chars.advance();
+                chars.length = 0; //Ensures that the whitespace or escape character are not included in the token
             }
 
             if(chars.has(0)){
@@ -66,7 +67,7 @@ public final class Lexer {
             return lexCharacter();
         } else if (peek("\"")) {
             return lexString();
-        } else if (peek("[!@#$%^&*()=<>+/-]")) {
+        } else if (peek("[;!@#$%^&*()=<>+/-]")) {
             return lexOperator(); // Handle single-character operators
         } else {
             throw new ParseException("Unknown token", chars.index);
@@ -206,7 +207,7 @@ public final class Lexer {
         }
 
         // Now check for single-character operators
-        if (match("[!@#$%^&*()+=\\-/]")) {
+        if (match("[;!@#$%^&*()+=\\-/]")) {
             return chars.emit(Token.Type.OPERATOR);
         }
 

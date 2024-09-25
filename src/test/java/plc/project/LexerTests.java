@@ -14,7 +14,7 @@ public class LexerTests {
 
     @Test
     void testTokensGenerated() {
-        String input = "Let x = 5;";
+        String input = "LET x = 5;";
         List<Token> tokens = new Lexer(input).lex();
 
         System.out.println("Generated Tokens:");
@@ -148,6 +148,8 @@ public class LexerTests {
                 ))
         );
     }
+
+
 
     @Test
     void testException() {
