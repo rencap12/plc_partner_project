@@ -75,14 +75,19 @@ public final class Lexer {
     }
 
     public Token lexIdentifier() {
+        // Ensure the identifier starts with a letter or underscore
         if (!peek("[A-Za-z_]")) {
             throw new ParseException("Invalid identifier start", chars.index);
         }
-        while (match("[A-Za-z0-9_-]")) {
+
+        // Match valid identifier characters, including letters, digits, underscores
+        while (match("[A-Za-z0-9_]")) {
             // Keep matching valid identifier characters
         }
+
         return chars.emit(Token.Type.IDENTIFIER);
     }
+
 
     public Token lexNumber() {
         // Handle negative numbers
@@ -122,6 +127,11 @@ public final class Lexer {
             while (peek("\\d")) {
                 number.append(chars.get(0));
                 chars.advance();
+            }
+
+            // Check for another decimal point, which is invalid
+            if (peek("\\.")) {
+                throw new ParseException("Multiple decimal points in number", chars.index);
             }
 
             // Emit a DECIMAL token, accounting for negativity
@@ -164,9 +174,14 @@ public final class Lexer {
         while (peek("[^\"\\\\]") || peek("\\\\")) {  // Match regular characters or escape sequences
             if (peek("\\\\")) {
                 lexEscape();  // Handle escape sequence
-            } else {
+            }
+            else {
                 chars.advance();
             }
+        }
+
+        if (match("\n")){
+            throw new ParseException("Unterminated newline in string!", chars.index);
         }
 
         if (!match("\"")) {
