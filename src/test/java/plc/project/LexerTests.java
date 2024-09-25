@@ -80,7 +80,9 @@ public class LexerTests {
                 Arguments.of("Leading Decimal", ".5", false),
                 Arguments.of("Single Digit", "1", false),
                 Arguments.of("Trailing Zeros", "7.000", true),
-                Arguments.of("Double Decimal", "1..0", false)
+                Arguments.of("Double Decimal", "1..0", false),
+                Arguments.of("Multiple Decimals", "1.2.3", false)
+
         );
     }
 
@@ -177,6 +179,13 @@ public class LexerTests {
                         new Token(Token.Type.INTEGER, "5", 8),
                         new Token(Token.Type.OPERATOR, ";", 9)
                 )),
+                Arguments.of("Example 3", "double i = 2.0;", Arrays.asList(
+                        new Token(Token.Type.IDENTIFIER, "double", 0),
+                        new Token(Token.Type.IDENTIFIER, "i", 7),
+                        new Token(Token.Type.OPERATOR, "=", 9),
+                        new Token(Token.Type.DECIMAL, "2.0", 11),
+                        new Token(Token.Type.OPERATOR, ";", 14)
+                )),
                 Arguments.of("Example 2", "print(\"Hello, World!\");", Arrays.asList(
                         new Token(Token.Type.IDENTIFIER, "print", 0),
                         new Token(Token.Type.OPERATOR, "(", 5),
@@ -184,14 +193,10 @@ public class LexerTests {
                         new Token(Token.Type.OPERATOR, ")", 21),
                         new Token(Token.Type.OPERATOR, ";", 22)
                 )),
-                Arguments.of("Multiple Decimals", "1.2.3", Arrays.asList(
-                        new Token(Token.Type.DECIMAL, "1.2", 0),
-                        new Token(Token.Type.OPERATOR, ".", 3),
-                        new Token(Token.Type.INTEGER, "3", 4)
-                )),
                 Arguments.of("Equals Combinations", "!====", Arrays.asList(
                         new Token(Token.Type.OPERATOR, "!=", 0),
-                        new Token(Token.Type.OPERATOR, "===", 2)
+                        new Token(Token.Type.OPERATOR, "==", 2),
+                        new Token(Token.Type.OPERATOR, "=", 4)
                 )),
                 Arguments.of("Weird Quotes", "'\"'string\"'", Arrays.asList(
                         new Token(Token.Type.CHARACTER, "'\"'", 0),

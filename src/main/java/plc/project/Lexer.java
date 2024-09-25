@@ -129,6 +129,11 @@ public final class Lexer {
                 chars.advance();
             }
 
+            // Check for another decimal point, which is invalid
+            if (peek("\\.")) {
+                throw new ParseException("Multiple decimal points in number", chars.index);
+            }
+
             // Emit a DECIMAL token, accounting for negativity
             return chars.emit(Token.Type.DECIMAL);
         }
