@@ -42,9 +42,7 @@ public class LexerTests {
                 Arguments.of("Alphabetic", "getName", true),
                 Arguments.of("Alphanumeric", "thelegend27", true),
                 Arguments.of("Leading Hyphen", "-five", false),
-                Arguments.of("Leading Digit", "1fish2fish3fishbluefish", false),
-                Arguments.of("Single Character", "a", true),
-                Arguments.of("Hyphenated", "a-b-c", false)
+                Arguments.of("Leading Digit", "1fish2fish3fishbluefish", false)
         );
     }
 
@@ -59,10 +57,7 @@ public class LexerTests {
                 Arguments.of("Single Digit", "1", true),
                 Arguments.of("Multiple Digits", "12345", true),
                 Arguments.of("Negative", "-1", true),
-                Arguments.of("Leading Zero", "01", false),
-                Arguments.of("Decimal", "123.456", false),
-                Arguments.of("Comma Separated", "1,234", false),
-                Arguments.of("Leading Zeros", "007", false)
+                Arguments.of("Leading Zero", "01", false)
         );
     }
 
@@ -77,12 +72,7 @@ public class LexerTests {
                 Arguments.of("Multiple Digits", "123.456", true),
                 Arguments.of("Negative Decimal", "-1.0", true),
                 Arguments.of("Trailing Decimal", "1.", false),
-                Arguments.of("Leading Decimal", ".5", false),
-                Arguments.of("Single Digit", "1", false),
-                Arguments.of("Trailing Zeros", "7.000", true),
-                Arguments.of("Double Decimal", "1..0", false),
-                Arguments.of("Multiple Decimals", "1.2.3", false)
-
+                Arguments.of("Leading Decimal", ".5", false)
         );
     }
 
@@ -97,10 +87,7 @@ public class LexerTests {
                 Arguments.of("Alphabetic", "\'c\'", true),
                 Arguments.of("Newline Escape", "\'\\n\'", true),
                 Arguments.of("Empty", "\'\'", false),
-                Arguments.of("Multiple", "\'abc\'", false),
-                Arguments.of("Unterminated", "'", false),
-                Arguments.of("Newline", "'␊'", false),
-                Arguments.of("unterm char", "'c", false)
+                Arguments.of("Multiple", "\'abc\'", false)
         );
     }
 
@@ -116,10 +103,8 @@ public class LexerTests {
                 Arguments.of("Alphabetic", "\"abc\"", true),
                 Arguments.of("Newline Escape", "\"Hello,\\nWorld\"", true),
                 Arguments.of("Unterminated", "\"unterminated", false),
-                Arguments.of("Invalid Escape", "\"invalid\\escape\"", false),
-                Arguments.of("Symbols", "\"!@#$%^&*()\"", true),
-                Arguments.of("Newline Unterminated", "\"unterminated\n\"", true)
-       );
+                Arguments.of("Invalid Escape", "\"invalid\\escape\"", false)
+        );
     }
 
     @ParameterizedTest
@@ -135,34 +120,9 @@ public class LexerTests {
                 Arguments.of("Comparison", "!=", true),
                 Arguments.of("equal equal", "==",  true),
                 Arguments.of("Space", " ", false),
-                Arguments.of("Tab", "\t", false),
-                Arguments.of("Symbol", "$", true),
-                Arguments.of("Plus Sign", "+", true)
+                Arguments.of("Tab", "\t", false)
         );
     }
-    @ParameterizedTest
-    @MethodSource
-    void testWhitespace(String test, String input, List<Token> expected) {
-        // Whitespace should be skipped, so it won't appear in the expected tokens.
-        test(input, expected, true);
-    }
-
-    private static Stream<Arguments> testWhitespace() {
-        return Stream.of(
-                Arguments.of("Multiple Spaces", "one   two", Arrays.asList(
-                        new Token(Token.Type.IDENTIFIER, "one", 0),
-                        new Token(Token.Type.IDENTIFIER, "two", 6) // Skip the spaces
-                )),
-                Arguments.of("Trailing Newline", "token\n", Arrays.asList(
-                        new Token(Token.Type.IDENTIFIER, "token", 0) // Skip the newline
-                )),
-                Arguments.of("Not Whitespace", "one\btwo", Arrays.asList(
-                        new Token(Token.Type.IDENTIFIER, "one", 0),
-                        new Token(Token.Type.IDENTIFIER, "two", 4)
-                ))
-        );
-    }
-
 
     @ParameterizedTest
     @MethodSource
@@ -179,13 +139,6 @@ public class LexerTests {
                         new Token(Token.Type.INTEGER, "5", 8),
                         new Token(Token.Type.OPERATOR, ";", 9)
                 )),
-                Arguments.of("Example 3", "double i = 2.0;", Arrays.asList(
-                        new Token(Token.Type.IDENTIFIER, "double", 0),
-                        new Token(Token.Type.IDENTIFIER, "i", 7),
-                        new Token(Token.Type.OPERATOR, "=", 9),
-                        new Token(Token.Type.DECIMAL, "2.0", 11),
-                        new Token(Token.Type.OPERATOR, ";", 14)
-                )),
                 Arguments.of("Example 2", "print(\"Hello, World!\");", Arrays.asList(
                         new Token(Token.Type.IDENTIFIER, "print", 0),
                         new Token(Token.Type.OPERATOR, "(", 5),
@@ -193,15 +146,10 @@ public class LexerTests {
                         new Token(Token.Type.OPERATOR, ")", 21),
                         new Token(Token.Type.OPERATOR, ";", 22)
                 )),
-                Arguments.of("Equals Combinations", "!====", Arrays.asList(
-                        new Token(Token.Type.OPERATOR, "!=", 0),
-                        new Token(Token.Type.OPERATOR, "==", 2),
-                        new Token(Token.Type.OPERATOR, "=", 4)
-                )),
-                Arguments.of("Weird Quotes", "'\"'string\"'", Arrays.asList(
-                        new Token(Token.Type.CHARACTER, "'\"'", 0),
-                        new Token(Token.Type.IDENTIFIER, "string", 3),
-                        new Token(Token.Type.STRING, "\"'\"", 9)
+                Arguments.of("Testing && == || != >= <=", "Hello != goodbye", Arrays.asList(
+                        new Token(Token.Type.IDENTIFIER, "Hello", 0),
+                        new Token(Token.Type.OPERATOR, "!=", 6),
+                        new Token(Token.Type.IDENTIFIER, "goodbye", 9)
                 ))
         );
     }

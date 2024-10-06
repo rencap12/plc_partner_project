@@ -57,7 +57,7 @@ public final class Lexer {
      * by {@link #lex()}
      */
     public Token lexToken() {
-        if (peek("!=") || peek("==")) {
+        if (peek("!=") || peek(">=") || peek("<=") || peek("==") || peek("&&") || peek("||"))  {
             return lexOperator(); // Handle this in lexOperator()
         } else if (peek("[A-Za-z_]")) {
             return lexIdentifier();
@@ -67,7 +67,7 @@ public final class Lexer {
             return lexCharacter();
         } else if (peek("\"")) {
             return lexString();
-        } else if (peek("[;!@#$%^&*()=<>+/-]")) {
+        } else if (peek("[;!@#$%^&*|()=<>+/-]")) {
             return lexOperator(); // Handle single-character operators
         } else {
             throw new ParseException("Unknown token", chars.index);
@@ -75,19 +75,14 @@ public final class Lexer {
     }
 
     public Token lexIdentifier() {
-        // Ensure the identifier starts with a letter or underscore
         if (!peek("[A-Za-z_]")) {
             throw new ParseException("Invalid identifier start", chars.index);
         }
-
-        // Match valid identifier characters, including letters, digits, underscores
-        while (match("[A-Za-z0-9_]")) {
+        while (match("[A-Za-z0-9_-]")) {
             // Keep matching valid identifier characters
         }
-
         return chars.emit(Token.Type.IDENTIFIER);
     }
-
 
     public Token lexNumber() {
         // Handle negative numbers
@@ -127,11 +122,6 @@ public final class Lexer {
             while (peek("\\d")) {
                 number.append(chars.get(0));
                 chars.advance();
-            }
-
-            // Check for another decimal point, which is invalid
-            if (peek("\\.")) {
-                throw new ParseException("Multiple decimal points in number", chars.index);
             }
 
             // Emit a DECIMAL token, accounting for negativity
@@ -174,14 +164,9 @@ public final class Lexer {
         while (peek("[^\"\\\\]") || peek("\\\\")) {  // Match regular characters or escape sequences
             if (peek("\\\\")) {
                 lexEscape();  // Handle escape sequence
-            }
-            else {
+            } else {
                 chars.advance();
             }
-        }
-
-        if (match("\n")){
-            throw new ParseException("Unterminated newline in string!", chars.index);
         }
 
         if (!match("\"")) {
@@ -212,6 +197,24 @@ public final class Lexer {
             return chars.emit(Token.Type.OPERATOR); // bang!
         }
 
+        if (peek(">")) {
+            chars.advance(); // Consume '!'
+            if (peek("=")) {
+                chars.advance(); // Consume '='}
+                return chars.emit(Token.Type.OPERATOR);
+            }
+            return chars.emit(Token.Type.OPERATOR); // bang!
+        }
+
+        if (peek("<")) {
+            chars.advance(); // Consume '!'
+            if (peek("=")) {
+                chars.advance(); // Consume '='}
+                return chars.emit(Token.Type.OPERATOR);
+            }
+            return chars.emit(Token.Type.OPERATOR); // bang!
+        }
+
         if (peek("=")) {
             chars.advance(); // Consume '='
             if (peek("=")){
@@ -221,8 +224,26 @@ public final class Lexer {
             return chars.emit(Token.Type.OPERATOR); // just =
         }
 
+        if (peek("&")) {
+            chars.advance(); // Consume '='
+            if (peek("&")){
+                chars.advance(); // Consume '='
+                return chars.emit(Token.Type.OPERATOR);
+            }
+            return chars.emit(Token.Type.OPERATOR); // just =
+        }
+
+        if (peek("|")) {
+            chars.advance(); // Consume '='
+            if (peek("|")){
+                chars.advance(); // Consume '='
+                return chars.emit(Token.Type.OPERATOR);
+            }
+            return chars.emit(Token.Type.OPERATOR); // just =
+        }
+
         // Now check for single-character operators
-        if (match("[;!@#$%^&*()+=\\-/]")) {
+        if (match("[;!@#$%^&*|()+=\\-/]")) {
             return chars.emit(Token.Type.OPERATOR);
         }
 
