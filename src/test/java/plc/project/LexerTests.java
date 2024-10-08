@@ -62,9 +62,9 @@ public class LexerTests {
         return Stream.of(
                Arguments.of("Single Digit", "1", true),
                Arguments.of("Multiple Digits", "12345", true),
-               Arguments.of("Negative", "-1", true),
+               Arguments.of("Negative", "-188", true),
                Arguments.of("Leading Zero", "01", false),
-                Arguments.of("Positive Integer", "+1", true),
+                Arguments.of("Positive Integer", "+100", true),
                Arguments.of("Comma Separated", "1,234", false),
                Arguments.of("Leading Zeros", "007", false),
                Arguments.of("Above Long Max", "123456789123456789123456789", false)
@@ -80,12 +80,18 @@ public class LexerTests {
     private static Stream<Arguments> testDecimal() {
         return Stream.of(
                 Arguments.of("Multiple Digits", "123.456", true),
+                Arguments.of("single digit", "1.0", true),
                 Arguments.of("Negative Decimal", "-1.0", true),
+                Arguments.of("simple decimal", "0.9", true),
+                Arguments.of("positive Decimal w/ sign", "+123.321", true),
+                Arguments.of("Negative zero", "-0.0", false),
                 Arguments.of("Trailing Decimal", "1.", false),
                 Arguments.of("Leading Decimal", ".5", false),
-                Arguments.of("Single Digit", "1", false),
+                Arguments.of("Single Digit Int", "1", false),
                 Arguments.of("Trailing Zeros", "7.000", true),
                 Arguments.of("Double Decimal", "1..0", false),
+                Arguments.of("leading zero", "08.0", false),
+                Arguments.of("above int precision", "9007199254740993.0", false),
                 Arguments.of("Multiple Decimals", "1.2.3", false)
 
         );

@@ -95,34 +95,40 @@ public final class Lexer {
     }
 
 
-    public Token lexNumber() {
-        // StringBuilder to store the final number
+    public Token lexNumber() throws ParseException {
         StringBuilder number = new StringBuilder();
+        boolean hasDigits = false;
 
         // Handle the optional '+' or '-' sign
-        if (peek("[-\\+]")){
+        if (peek("[-\\+]")) {
             if (chars.get(chars.index) == '-') {
                 match("-");
                 number.append('-'); // Append the negative sign
             } else if (peek("\\+")) {
                 match("\\+");
             }
-
         }
+
         // Check for leading zeros
         if (peek("0")) {
-            number.append(chars.get(0));
+            number.append('0');
             chars.advance();
 
-            // If there is another digit after the zero, it's invalid (leading zero case)
+            // No other digits allowed after a leading zero
             if (peek("\\d")) {
                 throw new ParseException("Invalid leading zero in number", chars.index);
             }
         } else {
             // Capture digits for numbers without leading zero
             while (peek("\\d")) {
+                hasDigits = true;  // At least one digit is present
                 number.append(chars.get(0));
                 chars.advance();
+            }
+
+            // If no digits were found, throw an error
+            if (!hasDigits) {
+                throw new ParseException("No digits found in number", chars.index);
             }
         }
 
@@ -142,19 +148,33 @@ public final class Lexer {
                 chars.advance();
             }
 
+            // Check if the number exceeds the integer precision of 9007199254740993
+            if (number.length() > 16 ||
+                    (number.length() == 16 && number.toString().compareTo("9007199254740993") > 0)) {
+                throw new ParseException("Number exceeds maximum integer precision: 9007199254740993", chars.index);
+            }
+
+            // Check for -0.0 case
+            if (number.toString().equals("-0.0")) {
+                throw new ParseException("Invalid number: -0.0 is not allowed", chars.index);
+            }
+
             // Emit a DECIMAL token
             return chars.emit(Token.Type.DECIMAL);
         }
-        // Check if the number exceeds Long.MAX_VALUE
+
+        // Check if the number exceeds Integer.MAX_VALUE
         String numberStr = number.toString();
-        if (numberStr.length() > 19 ||
-                (numberStr.length() == 19 && numberStr.compareTo(String.valueOf(Long.MAX_VALUE)) > 0)) {
-            throw new ParseException("Number exceeds maximum long value", chars.index);
+        if (numberStr.length() > 10 || // Integer.MAX_VALUE has 10 digits
+                (numberStr.length() == 10 && numberStr.compareTo(String.valueOf(Integer.MAX_VALUE)) > 0)) {
+            throw new ParseException("Number exceeds maximum integer value", chars.index);
         }
 
         // Emit an INTEGER token if no decimal point was found
         return chars.emit(Token.Type.INTEGER);
     }
+
+
 
 
     public Token lexCharacter() {
