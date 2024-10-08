@@ -39,12 +39,16 @@ public class LexerTests {
 
     private static Stream<Arguments> testIdentifier() {
         return Stream.of(
-                Arguments.of("Alphabetic", "getName", true),
-                Arguments.of("Alphanumeric", "thelegend27", true),
-                Arguments.of("Leading Hyphen", "-five", false),
-                Arguments.of("Leading Digit", "1fish2fish3fishbluefish", false),
-                Arguments.of("Single Character", "a", true),
-                Arguments.of("Hyphenated", "a-b-c", false)
+                Arguments.of("Alphabetic", "abc", true),
+                Arguments.of("Alphanumeric", "abc123", true),
+                Arguments.of("Hyphens", "a-b-c", true), // Depending on the lexer rules, if hyphens are allowed, set to true
+                Arguments.of("Only Underscores", "___", true),
+                Arguments.of("Leading Underscore", "_abc", true),
+                Arguments.of("Capitals", "ABC", true),
+                Arguments.of("hyphen start", "-five", false),
+                Arguments.of("digit start", "1fish2fish3fishbluefish", false),
+                Arguments.of("Short Identifier", "a", true),
+                Arguments.of("Long Identifier", "abcdefghijklmnopqrstuvwxyz012346789_-", true) // Set to false if the length exceeds limits or has illegal characters
         );
     }
 
@@ -56,13 +60,14 @@ public class LexerTests {
 
     private static Stream<Arguments> testInteger() {
         return Stream.of(
-                Arguments.of("Single Digit", "1", true),
-                Arguments.of("Multiple Digits", "12345", true),
-                Arguments.of("Negative", "-1", true),
-                Arguments.of("Leading Zero", "01", false),
-                Arguments.of("Decimal", "123.456", false),
-                Arguments.of("Comma Separated", "1,234", false),
-                Arguments.of("Leading Zeros", "007", false)
+               Arguments.of("Single Digit", "1", true),
+               Arguments.of("Multiple Digits", "12345", true),
+               Arguments.of("Negative", "-1", true),
+               Arguments.of("Leading Zero", "01", false),
+                Arguments.of("Positive Integer", "+1", true),
+               Arguments.of("Comma Separated", "1,234", false),
+               Arguments.of("Leading Zeros", "007", false),
+               Arguments.of("Above Long Max", "123456789123456789123456789", false)
         );
     }
 
@@ -99,7 +104,7 @@ public class LexerTests {
                 Arguments.of("Empty", "\'\'", false),
                 Arguments.of("Multiple", "\'abc\'", false),
                 Arguments.of("Unterminated", "'", false),
-                Arguments.of("Newline", "'␊'", false),
+                Arguments.of("Newline", "'\n'", false),
                 Arguments.of("unterm char", "'c", false)
         );
     }

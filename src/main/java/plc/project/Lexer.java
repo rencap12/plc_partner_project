@@ -59,9 +59,10 @@ public final class Lexer {
     public Token lexToken() {
         if (peek("!=") || peek("==")) {
             return lexOperator(); // Handle this in lexOperator()
-        } else if (peek("[A-Za-z_]")) {
+        }
+        else if (peek("[A-Za-z_-]")) {
             return lexIdentifier();
-        } else if (peek("[0-9]") || peek("-")) { // Include negative sign for numbers
+        } else if (peek("[0-9]") || peek("[-\\+]", "[0-9]")) { // Include negative sign for numbers
             return lexNumber();
         } else if (peek("'")) {
             return lexCharacter();
@@ -75,13 +76,18 @@ public final class Lexer {
     }
 
     public Token lexIdentifier() {
+        // check if it has a hyphen at beg - could be a negative number
+        if (peek("-")){
+            System.out.println("was in identifier, now went to lexNumber");
+            return lexNumber();
+        }
         // Ensure the identifier starts with a letter or underscore
         if (!peek("[A-Za-z_]")) {
             throw new ParseException("Invalid identifier start", chars.index);
         }
 
         // Match valid identifier characters, including letters, digits, underscores
-        while (match("[A-Za-z0-9_]")) {
+        while (match("[A-Za-z0-9_-]")) {
             // Keep matching valid identifier characters
         }
 
@@ -90,12 +96,20 @@ public final class Lexer {
 
 
     public Token lexNumber() {
-        // Handle negative numbers
-        boolean isNegative = match("-");
-
-        // Capture the digits
+        // StringBuilder to store the final number
         StringBuilder number = new StringBuilder();
 
+        // Handle the optional '+' or '-' sign
+        if (peek("[-\\+]")){
+            if (chars.get(chars.index) == '-') {
+                match("-");
+                number.append('-'); // Append the negative sign
+            } else if (peek("\\+")) {
+                match("\\+");
+            }
+            System.out.println("plus sign matched");
+
+        }
         // Check for leading zeros
         if (peek("0")) {
             number.append(chars.get(0));
@@ -129,18 +143,14 @@ public final class Lexer {
                 chars.advance();
             }
 
-            // Check for another decimal point, which is invalid
-            if (peek("\\.")) {
-                throw new ParseException("Multiple decimal points in number", chars.index);
-            }
-
-            // Emit a DECIMAL token, accounting for negativity
+            // Emit a DECIMAL token
             return chars.emit(Token.Type.DECIMAL);
         }
 
         // Emit an INTEGER token if no decimal point was found
-        return chars.emit(isNegative ? Token.Type.INTEGER : Token.Type.INTEGER);
+        return chars.emit(Token.Type.INTEGER);
     }
+
 
     public Token lexCharacter() {
         // Ensure the character starts with a single quote
