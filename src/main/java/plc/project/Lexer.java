@@ -78,7 +78,7 @@ public final class Lexer {
     public Token lexIdentifier() {
         // check if it has a hyphen at beg - could be a negative number
         if (peek("-")){
-            System.out.println("was in identifier, now went to lexNumber");
+//            System.out.println("was in identifier, now went to lexNumber");
             return lexNumber();
         }
         // Ensure the identifier starts with a letter or underscore
@@ -107,7 +107,6 @@ public final class Lexer {
             } else if (peek("\\+")) {
                 match("\\+");
             }
-            System.out.println("plus sign matched");
 
         }
         // Check for leading zeros
@@ -145,6 +144,12 @@ public final class Lexer {
 
             // Emit a DECIMAL token
             return chars.emit(Token.Type.DECIMAL);
+        }
+        // Check if the number exceeds Long.MAX_VALUE
+        String numberStr = number.toString();
+        if (numberStr.length() > 19 ||
+                (numberStr.length() == 19 && numberStr.compareTo(String.valueOf(Long.MAX_VALUE)) > 0)) {
+            throw new ParseException("Number exceeds maximum long value", chars.index);
         }
 
         // Emit an INTEGER token if no decimal point was found
