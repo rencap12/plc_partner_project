@@ -110,8 +110,14 @@ public class LexerTests {
                 Arguments.of("Empty", "\'\'", false),
                 Arguments.of("Multiple", "\'abc\'", false),
                 Arguments.of("Unterminated", "'", false),
-                Arguments.of("Newline", "'\n'", false),
-                Arguments.of("unterm char", "'c", false)
+                Arguments.of("Newline", "\'\\n\'", true),
+                Arguments.of("unterm char", "'c", false),
+                Arguments.of("digit char", "\'1\'", true),
+                Arguments.of("unicode", "\'p\'", true),
+                Arguments.of("char with a space", "\'a\s\'", true),
+                Arguments.of("space", "\'\s\'", true),
+                Arguments.of("single quote escape", "\'\\\'\'", true),
+                Arguments.of("backslash escape", "\'\\\\\'", true)
         );
     }
 

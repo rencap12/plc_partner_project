@@ -184,12 +184,16 @@ public final class Lexer {
         }
 
         // Check if the next character is a valid single character or an escape sequence
-        if (peek("[^'\\\\]")) {  // Match any character except ' or \
+        if (peek("^[^'\\\\]$") || peek("^\\s$")) {  // Match any character except ' or \
             chars.advance();  // Consume the character
         } else if (peek("\\\\")) {  // If it's a backslash, handle the escape sequence
             lexEscape();  // lexEscape() handles the escape sequence and throws an error if invalid
         } else {
             throw new ParseException("Invalid character literal", chars.index);
+        }
+
+        while(peek("[ \b\n\r\t]")){
+            chars.advance(); // skip over white space
         }
 
         // Ensure the character is terminated by a single quote
