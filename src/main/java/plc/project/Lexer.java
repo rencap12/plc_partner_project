@@ -41,9 +41,9 @@ public final class Lexer {
                 tokens.add(lexToken());
             }
         }
-        for (Token token: tokens){
-            System.out.println("token:" + token.toString());
-        }
+//        for (Token token: tokens){
+//            System.out.println("token:" + token.toString());
+//        }
 
         return tokens;
     }
@@ -59,11 +59,12 @@ public final class Lexer {
     public Token lexToken() {
         if (peek("!=") || peek("==")) {
             return lexOperator(); // Handle this in lexOperator()
-        }
-        else if (peek("[A-Za-z_-]")) {
+        }  else if (peek("[A-Za-z_]")) {
             return lexIdentifier();
         } else if (peek("[0-9]") || peek("[-\\+]", "[0-9]")) { // Include negative sign for numbers
             return lexNumber();
+        } else if (peek("-")) { // Check if it's a hyphen for operator
+            return lexOperator(); // Treat hyphen as an operator
         } else if (peek("'")) {
             return lexCharacter();
         } else if (peek("\"")) {
@@ -76,11 +77,6 @@ public final class Lexer {
     }
 
     public Token lexIdentifier() {
-        // check if it has a hyphen at beg - could be a negative number
-        if (peek("-")){ // should catch for - operator
-//            System.out.println("was in identifier, now went to lexNumber");
-            return lexNumber();
-        }
         // Ensure the identifier starts with a letter or underscore
         if (!peek("[A-Za-z_]")) {
             throw new ParseException("Invalid identifier start", chars.index);
@@ -102,10 +98,6 @@ public final class Lexer {
         // Handle the optional '+' or '-' sign
         if (peek("[-\\+]")) {
             if (chars.get(chars.index) == '-') {
-                if (!peek("\\d")) { // operator
-//                    throw new ParseException("Invalid leading zero in number", chars.index);
-                    return lexOperator();
-                }
                 match("-");
                 number.append('-'); // Append the negative sign
             } else if (peek("\\+")) {
@@ -249,6 +241,10 @@ public final class Lexer {
     public Token lexOperator() {
         // Check for multi-character operators first
 
+        if (match("-")) {
+            return chars.emit(Token.Type.OPERATOR); // Emit the hyphen as an operator
+        }
+
         // Not equals (!=)
         if (peek("!")) {
             chars.advance(); // Consume '!'
@@ -305,10 +301,6 @@ public final class Lexer {
                 chars.advance(); // Consume '|'
                 return chars.emit(Token.Type.OPERATOR); // '||'
             }
-        }
-
-        if(match("([<>!=] '='?|(.))")) {
-            return chars.emit(Token.Type.OPERATOR);
         }
 
         // Now check for single-character operators, including Unicode
@@ -389,8 +381,8 @@ public final class Lexer {
         public Token emit(Token.Type type) {
             int start = index - length;
             skip();
-            Token token = new Token(type, input.substring(start, index), start);
-            System.out.println("this is was emitted: " + token.toString() + ", " + token.getType());
+//            Token token = new Token(type, input.substring(start, index), start);
+//            System.out.println("this is was emitted: " + token.toString() + ", " + token.getType());
             return new Token(type, input.substring(start, index), start);
         }
 
