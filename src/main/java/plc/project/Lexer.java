@@ -41,9 +41,9 @@ public final class Lexer {
                 tokens.add(lexToken());
             }
         }
-//        for (Token token: tokens){
-//            System.out.println("token:" + token.toString());
-//        }
+        for (Token token: tokens){
+            System.out.println("token:" + token.toString());
+        }
 
         return tokens;
     }
@@ -68,7 +68,7 @@ public final class Lexer {
             return lexCharacter();
         } else if (peek("\"")) {
             return lexString();
-        } else if (peek("[;!@#$%^&*()=<>+/-]")) {
+        } else if (peek("[|;!@#$%^&*()=<>+/-]")) {
             return lexOperator(); // Handle single-character operators
         } else {
             throw new ParseException("Unknown token", chars.index);
@@ -77,7 +77,7 @@ public final class Lexer {
 
     public Token lexIdentifier() {
         // check if it has a hyphen at beg - could be a negative number
-        if (peek("-")){
+        if (peek("-")){ // should catch for - operator
 //            System.out.println("was in identifier, now went to lexNumber");
             return lexNumber();
         }
@@ -102,6 +102,10 @@ public final class Lexer {
         // Handle the optional '+' or '-' sign
         if (peek("[-\\+]")) {
             if (chars.get(chars.index) == '-') {
+                if (!peek("\\d")) { // operator
+//                    throw new ParseException("Invalid leading zero in number", chars.index);
+                    return lexOperator();
+                }
                 match("-");
                 number.append('-'); // Append the negative sign
             } else if (peek("\\+")) {
@@ -128,7 +132,8 @@ public final class Lexer {
 
             // If no digits were found, throw an error
             if (!hasDigits) {
-                throw new ParseException("No digits found in number", chars.index);
+                return lexOperator();
+               // throw new ParseException("No digits found in number", chars.index);
             }
         }
 
@@ -213,18 +218,18 @@ public final class Lexer {
         while (peek("[^\"\\\\]") || peek("\\\\")) {  // Match regular characters or escape sequences
             if (peek("\\\\")) {
                 lexEscape();  // Handle escape sequence
-            }
-            else {
+            } else if (match("[\\n]")) {
+               throw new ParseException("Unterminated newline in string!", chars.index);
+            } else {
                 chars.advance();
             }
         }
 
-        if (match("\n")){
-            throw new ParseException("Unterminated newline in string!", chars.index);
-        }
-
         if (!match("\"")) {
             throw new ParseException("String literal must end with a double quote", chars.index);
+        }
+        else {
+            match("\"");
         }
 
         return chars.emit(Token.Type.STRING);
@@ -240,33 +245,80 @@ public final class Lexer {
         }
     }
 
+
     public Token lexOperator() {
         // Check for multi-character operators first
+
+        // Not equals (!=)
         if (peek("!")) {
             chars.advance(); // Consume '!'
             if (peek("=")) {
-                chars.advance(); // Consume '='}
-                return chars.emit(Token.Type.OPERATOR);
+                chars.advance(); // Consume '='
+                return chars.emit(Token.Type.OPERATOR); // '!='
             }
-            return chars.emit(Token.Type.OPERATOR); // bang!
+            return chars.emit(Token.Type.OPERATOR); // Just '!'
         }
 
+        // Equals (==)
         if (peek("=")) {
             chars.advance(); // Consume '='
-            if (peek("=")){
+            if (peek("=")) {
                 chars.advance(); // Consume '='
-                return chars.emit(Token.Type.OPERATOR);
+                return chars.emit(Token.Type.OPERATOR); // '=='
             }
-            return chars.emit(Token.Type.OPERATOR); // just =
+            return chars.emit(Token.Type.OPERATOR); // Just '='
         }
 
-        // Now check for single-character operators
-        if (match("[;!@#$%^&*()+=\\-/]")) {
+        // Less than or equals (<=)
+        if (peek("<")) {
+            chars.advance(); // Consume '<'
+            if (peek("=")) {
+                chars.advance(); // Consume '='
+                return chars.emit(Token.Type.OPERATOR); // '<='
+            }
+            return chars.emit(Token.Type.OPERATOR); // Just '<'
+        }
+
+        // Greater than or equals (>=)
+        if (peek(">")) {
+            chars.advance(); // Consume '>'
+            if (peek("=")) {
+                chars.advance(); // Consume '='
+                return chars.emit(Token.Type.OPERATOR); // '>='
+            }
+            return chars.emit(Token.Type.OPERATOR); // Just '>'
+        }
+
+        // Logical AND (&&)
+        if (peek("&")) {
+            chars.advance(); // Consume '&'
+            if (peek("&")) {
+                chars.advance(); // Consume '&'
+                return chars.emit(Token.Type.OPERATOR); // '&&'
+            }
+        }
+
+        // Logical OR (||)
+        if (peek("\\|")) {
+            chars.advance(); // Consume '|'
+            if (peek("\\|")) {
+                chars.advance(); // Consume '|'
+                return chars.emit(Token.Type.OPERATOR); // '||'
+            }
+        }
+
+        if(match("([<>!=] '='?|(.))")) {
+            return chars.emit(Token.Type.OPERATOR);
+        }
+
+        // Now check for single-character operators, including Unicode
+        if (match("[;!@#$%^&*()+=/ρ<>\\-]")) {  // Added '<' and '>', and ensured 'ρ' is properly checked
             return chars.emit(Token.Type.OPERATOR);
         }
 
         throw new ParseException("Invalid operator", chars.index);
     }
+
 
     /**
      * Returns true if the next sequence of characters match the given patterns,
@@ -337,6 +389,8 @@ public final class Lexer {
         public Token emit(Token.Type type) {
             int start = index - length;
             skip();
+            Token token = new Token(type, input.substring(start, index), start);
+            System.out.println("this is was emitted: " + token.toString() + ", " + token.getType());
             return new Token(type, input.substring(start, index), start);
         }
 

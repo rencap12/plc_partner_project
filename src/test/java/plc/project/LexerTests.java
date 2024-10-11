@@ -127,17 +127,34 @@ public class LexerTests {
         test(input, Token.Type.STRING, success);
     }
 
+//    Character Reference:
+//    Line Feed: ␊, \n
+//    Carriage Return: ␍, \r
+//    Horizontal Tab: ␉, \t
+//    Backspace: ␈, \b
+//    Form Feed: ␌, \f
+//    Vertical Tab: ␋, \u000B
+//    Example: [ ␊␍␉], "[ \n\r\t]"
     private static Stream<Arguments> testString() {
         return Stream.of(
-                Arguments.of("Empty", "\"\"", true),
-                Arguments.of("Alphabetic", "\"abc\"", true),
-                Arguments.of("Newline Escape", "\"Hello,\\nWorld\"", true),
-                Arguments.of("Unterminated", "\"unterminated", false),
-                Arguments.of("Invalid Escape", "\"invalid\\escape\"", false),
-                Arguments.of("Symbols", "\"!@#$%^&*()\"", true),
-                Arguments.of("Newline Unterminated", "\"unterminated\n\"", true)
-       );
+                Arguments.of("Empty", "\"\"", true),  // Test for empty string
+                Arguments.of("Single Character", "\"c\"", true),  // Single character string
+                Arguments.of("Alphabetic", "\"abc\"", true),  // Alphabetic characters
+                Arguments.of("Numeric", "\"123\"", true),  // Numeric string
+                Arguments.of("Symbols", "\"!@#$%^&*\"", true),  // String with symbols
+                Arguments.of("Unicode", "\"ρ★⚡\"", true),  // String with Unicode characters
+                Arguments.of("Whitespace", "\" ␈␉\"", true),  // String with whitespace
+                Arguments.of("Escape", "\"Hello, \\nWorld!\"", true),  // Newline escape
+                Arguments.of("Alphabetic Escapes", "\"a\\bcdefghijklm\\nopq\\rs\\tuvwxyz\"", true),  // Multiple escapes
+                Arguments.of("Special Escapes", "\"sq\\'dq\\\"bs\\\\\"", true),  // Escaping quotes and backslash
+                Arguments.of("Invalid Escape", "\"abc\\0123\"", false),  // Invalid escape sequence
+                Arguments.of("Unicode Escapes", "\"a\\u0000b\\u12ABc\"", false),  // Unicode escape sequences
+                Arguments.of("Unterminated", "\"unterminated", false),  // Missing ending quote
+                Arguments.of("Unterminated Newline", "\"unterminated\n\"", false),  // Newline in unterminated string
+                Arguments.of("Unterminated Empty Quote", "\"", false)  // Empty opening quote
+        );
     }
+
 
     @ParameterizedTest
     @MethodSource
@@ -150,13 +167,27 @@ public class LexerTests {
         return Stream.of(
                 Arguments.of("Character", "(", true),
                 Arguments.of("Comparison", "!=", true),
-                Arguments.of("equal equal", "==",  true),
+                Arguments.of("Equal Equal", "==", true),
                 Arguments.of("Space", " ", false),
                 Arguments.of("Tab", "\t", false),
                 Arguments.of("Symbol", "$", true),
-                Arguments.of("Plus Sign", "+", true)
+                Arguments.of("Plus Sign", "+", true),
+                Arguments.of("Remainder", "%", true),
+                Arguments.of("Unicode", "ρ", true),
+                Arguments.of("Greater Than", ">", true),
+                Arguments.of("Not Equals", "!=", true),
+                Arguments.of("Less Than Equals", "<=", true),
+                Arguments.of("Greater Than Equals", ">=", true),
+                Arguments.of("And", "&&", true),
+                Arguments.of("Or", "||", true),
+                Arguments.of("Plus", "+", true),
+                Arguments.of("Hyphen", "-", true), // Ensure this is correct
+                Arguments.of("Space", " ", false),
+                Arguments.of("Tab", "\t", false),
+                Arguments.of("Form Feed", "\f", false)
         );
     }
+
     @ParameterizedTest
     @MethodSource
     void testWhitespace(String test, String input, List<Token> expected) {
@@ -239,8 +270,12 @@ public class LexerTests {
     private static void test(String input, Token.Type expected, boolean success) {
         try {
             if (success) {
+                System.out.println("Testing: " + input + ", Expected: " + expected );
+
                 Assertions.assertEquals(new Token(expected, input, 0), new Lexer(input).lexToken());
             } else {
+                System.out.println("Testing: " + input + ", Expected: " + expected );
+
                 Assertions.assertNotEquals(new Token(expected, input, 0), new Lexer(input).lexToken());
             }
         } catch (ParseException e) {
@@ -255,8 +290,10 @@ public class LexerTests {
     private static void test(String input, List<Token> expected, boolean success) {
         try {
             if (success) {
+                System.out.println("Testing: " + input + ", Expected: " + expected );
                 Assertions.assertEquals(expected, new Lexer(input).lex());
             } else {
+                System.out.println("Testing: " + input + ", Expected: " + expected );
                 Assertions.assertNotEquals(expected, new Lexer(input).lex());
             }
         } catch (ParseException e) {
