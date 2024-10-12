@@ -1,5 +1,7 @@
 package plc.project;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -311,7 +313,7 @@ public final class Parser {
     public Ast.Expression parseLogicalExpression() throws ParseException {
         Ast.Expression left = parseEqualityExpression();
 
-        while (match("AND", "OR")) {
+        while (match("&&", "||")) {
             String operator = tokens.get(-1).getLiteral();
             Ast.Expression right = parseEqualityExpression();
             left = new Ast.Expression.Binary(operator, left, right);
@@ -398,41 +400,73 @@ public final class Parser {
      * not strictly necessary.
      */
     public Ast.Expression parsePrimaryExpression() throws ParseException {
-        if (match(Token.Type.INTEGER)) {
+        if (peek(Token.Type.INTEGER)) {
             // Integer literal
-            return new Ast.Expression.Literal(Integer.parseInt(tokens.get(-1).getLiteral()));
-        } else if (match(Token.Type.DECIMAL)) {
+            BigInteger val = new BigInteger(tokens.get(0).getLiteral());
+            match(Token.Type.INTEGER);
+            return new Ast.Expression.Literal(val);
+        } else if (peek(Token.Type.DECIMAL)) {
             // Decimal literal
-            return new Ast.Expression.Literal(Double.parseDouble(tokens.get(-1).getLiteral()));
-        } else if (match(Token.Type.CHARACTER)) {
+            BigDecimal val = new BigDecimal(tokens.get(0).getLiteral());
+            match(Token.Type.DECIMAL);
+            return new Ast.Expression.Literal(val);
+        } else if (peek(Token.Type.CHARACTER)) {
             // Character literal
-            return new Ast.Expression.Literal(tokens.get(-1).getLiteral().charAt(0));
-        } else if (match(Token.Type.STRING)) {
+            // 's' e.g.
+            if (tokens.get(0).getLiteral().length() < 4) {
+                char c = tokens.get(0).getLiteral().charAt(1);
+                // System.out.println(c);
+                match(Token.Type.CHARACTER);
+                return new Ast.Expression.Literal(c);
+            } else { // escape char
+                char c = tokens.get(0).getLiteral().charAt(1);
+                match(Token.Type.CHARACTER);
+                return new Ast.Expression.Literal(c);
+            }
+
+        } else if (peek(Token.Type.STRING)) {
             // String literal
-            return new Ast.Expression.Literal(tokens.get(-1).getLiteral());
-        } else if (match(Token.Type.IDENTIFIER)) {
+            match(Token.Type.STRING);
+            return new Ast.Expression.Literal(tokens.get(0).getLiteral());
+        } else if (peek(Token.Type.IDENTIFIER)) {
+
             // Variable reference or function call
-            String identifier = tokens.get(-1).getLiteral();
+            String identifier = tokens.get(0).getLiteral();
+
+            match(Token.Type.IDENTIFIER);
 
             // Check if it's a function call
             if (peek("(")) {
-                // No receiver for this function, the identifier is the name
+                // Parse function call
                 return parseFunctionCall(Optional.empty(), identifier);
             } else {
                 // Variable reference
                 return new Ast.Expression.Access(Optional.empty(), identifier);
             }
         } else if (match("(")) {
-            // Grouped expression (parentheses)
+            // Grouped expression (e.g., "(expr)")
             Ast.Expression expression = parseExpression();
             if (!match(")")) {
                 throw new ParseException("Expected closing parenthesis ')'", tokens.get(0).getIndex());
             }
             return new Ast.Expression.Group(expression);
+
         } else {
-            // Invalid expression
             throw new ParseException("Expected expression", tokens.get(0).getIndex());
         }
+
+//        } else if (match("(")) { WORK ON GROUP EXPRESSION
+//            // Grouped expression (parentheses)
+//            Ast.Expression expression = parseExpression();
+//            if (!match(")")) {
+//                throw new ParseException("Expected closing parenthesis ')'", tokens.get(0).getIndex());
+//            }
+//            return new Ast.Expression.Group(expression);
+//        }
+
+            // Invalid expression
+//            throw new ParseException("Expected expression", tokens.get(0).getIndex());
+
     }
 
     // helper func

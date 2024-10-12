@@ -304,7 +304,8 @@ public final class Lexer {
         }
 
         // Now check for single-character operators, including Unicode
-        if (match("[.,;!@#$%^&*()+=/ρ<>\\-]")) {  // Added '<' and '>', and ensured 'ρ' is properly checked
+        // WORK ON UNICODE
+        if (match("[.,;!@#$%^&*()+=/<>\\-]")) {  // Added '<' and '>', and ensure unicode is properly checked
             return chars.emit(Token.Type.OPERATOR);
         }
 
