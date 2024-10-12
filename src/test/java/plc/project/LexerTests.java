@@ -250,6 +250,103 @@ public class LexerTests {
                         new Token(Token.Type.CHARACTER, "'\"'", 0),
                         new Token(Token.Type.IDENTIFIER, "string", 3),
                         new Token(Token.Type.STRING, "\"'\"", 9)
+                )),
+                // Simple Function Definition: FUN f(x, y, z) DO END
+                Arguments.of("Simple Function Definition", "FUN f(x, y, z) DO END", Arrays.asList(
+                        new Token(Token.Type.IDENTIFIER, "FUN", 0),
+                        new Token(Token.Type.IDENTIFIER, "f", 4),
+                        new Token(Token.Type.OPERATOR, "(", 5),
+                        new Token(Token.Type.IDENTIFIER, "x", 6),
+                        new Token(Token.Type.OPERATOR, ",", 7),
+                        new Token(Token.Type.IDENTIFIER, "y", 9),
+                        new Token(Token.Type.OPERATOR, ",", 10),
+                        new Token(Token.Type.IDENTIFIER, "z", 12),
+                        new Token(Token.Type.OPERATOR, ")", 13),
+                        new Token(Token.Type.IDENTIFIER, "DO", 15),
+                        new Token(Token.Type.IDENTIFIER, "END", 18)
+                )),
+
+                // Declaration: LET name;
+                Arguments.of("Simple Declaration", "LET name;", Arrays.asList(
+                        new Token(Token.Type.IDENTIFIER, "LET", 0),
+                        new Token(Token.Type.IDENTIFIER, "name", 4),
+                        new Token(Token.Type.OPERATOR, ";", 8)
+                )),
+
+                // Initialization: LET name = expr;
+                Arguments.of("Initialization", "LET name = expr;", Arrays.asList(
+                        new Token(Token.Type.IDENTIFIER, "LET", 0),
+                        new Token(Token.Type.IDENTIFIER, "name", 4),
+                        new Token(Token.Type.OPERATOR, "=", 9),
+                        new Token(Token.Type.IDENTIFIER, "expr", 11),
+                        new Token(Token.Type.OPERATOR, ";", 15)
+                )),
+
+                // Assignment: name = expr;
+                Arguments.of("Assignment", "name = expr;", Arrays.asList(
+                        new Token(Token.Type.IDENTIFIER, "name", 0),
+                        new Token(Token.Type.OPERATOR, "=", 5),
+                        new Token(Token.Type.IDENTIFIER, "expr", 7),
+                        new Token(Token.Type.OPERATOR, ";", 11)
+                )),
+
+                // If Statement: IF expr DO stmt1; ELSE stmt2; END
+                Arguments.of("If Statement", "IF expr DO stmt1; ELSE stmt2; END", Arrays.asList(
+                        new Token(Token.Type.IDENTIFIER, "IF", 0),
+                        new Token(Token.Type.IDENTIFIER, "expr", 3),
+                        new Token(Token.Type.IDENTIFIER, "DO", 8),
+                        new Token(Token.Type.IDENTIFIER, "stmt1", 11),
+                        new Token(Token.Type.OPERATOR, ";", 16),
+                        new Token(Token.Type.IDENTIFIER, "ELSE", 18),
+                        new Token(Token.Type.IDENTIFIER, "stmt2", 23),
+                        new Token(Token.Type.OPERATOR, ";", 28),
+                        new Token(Token.Type.IDENTIFIER, "END", 30)
+                )),
+
+                // While Statement: WHILE expr DO stmt; END
+                Arguments.of("While Loop", "WHILE expr DO stmt; END", Arrays.asList(
+                        new Token(Token.Type.IDENTIFIER, "WHILE", 0),
+                        new Token(Token.Type.IDENTIFIER, "expr", 6),
+                        new Token(Token.Type.IDENTIFIER, "DO", 11),
+                        new Token(Token.Type.IDENTIFIER, "stmt", 14),
+                        new Token(Token.Type.OPERATOR, ";", 18),
+                        new Token(Token.Type.IDENTIFIER, "END", 20)
+                )),
+
+                // Binary Expression: x + 1 == y / 2.0 - 3
+                Arguments.of("Binary Expression", "x + 1 == y / 2.0 - 3", Arrays.asList(
+                        new Token(Token.Type.IDENTIFIER, "x", 0),
+                        new Token(Token.Type.OPERATOR, "+", 2),
+                        new Token(Token.Type.INTEGER, "1", 4),
+                        new Token(Token.Type.OPERATOR, "==", 6),
+                        new Token(Token.Type.IDENTIFIER, "y", 9),
+                        new Token(Token.Type.OPERATOR, "/", 11),
+                        new Token(Token.Type.DECIMAL, "2.0", 13),
+                        new Token(Token.Type.OPERATOR, "-", 17),
+                        new Token(Token.Type.INTEGER, "3", 19)
+                )),
+
+                // Function Call: print("Hello", separator, "World!")
+                Arguments.of("Function Call", "print(\"Hello\", separator, \"World!\")", Arrays.asList(
+                        new Token(Token.Type.IDENTIFIER, "print", 0),
+                        new Token(Token.Type.OPERATOR, "(", 5),
+                        new Token(Token.Type.STRING, "\"Hello\"", 6),
+                        new Token(Token.Type.OPERATOR, ",", 13),
+                        new Token(Token.Type.IDENTIFIER, "separator", 15),
+                        new Token(Token.Type.OPERATOR, ",", 24),
+                        new Token(Token.Type.STRING, "\"World!\"", 26),
+                        new Token(Token.Type.OPERATOR, ")", 34)
+                )),
+
+                // Chained Method Calls: obj.field.method()
+                Arguments.of("Method Call Chain", "obj.field.method()", Arrays.asList(
+                        new Token(Token.Type.IDENTIFIER, "obj", 0),
+                        new Token(Token.Type.OPERATOR, ".", 3),
+                        new Token(Token.Type.IDENTIFIER, "field", 4),
+                        new Token(Token.Type.OPERATOR, ".", 9),
+                        new Token(Token.Type.IDENTIFIER, "method", 10),
+                        new Token(Token.Type.OPERATOR, "(", 16),
+                        new Token(Token.Type.OPERATOR, ")", 17)
                 ))
         );
     }
