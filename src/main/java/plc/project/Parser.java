@@ -313,7 +313,7 @@ public final class Parser {
     public Ast.Expression parseLogicalExpression() throws ParseException {
         Ast.Expression left = parseEqualityExpression();
 
-        while (peek("&&") || match( "||")) {
+        while (peek("&&") || match("||")) {
             String operator = tokens.get(-1).getLiteral();
             Ast.Expression right = parseEqualityExpression();
             left = new Ast.Expression.Binary(operator, left, right);
