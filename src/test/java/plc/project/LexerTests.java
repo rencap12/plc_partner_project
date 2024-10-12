@@ -246,7 +246,7 @@ public class LexerTests {
                         new Token(Token.Type.OPERATOR, "==", 2),
                         new Token(Token.Type.OPERATOR, "=", 4)
                 )),
-                Arguments.of("Weird Quotes", "'\"'string\"'", Arrays.asList(
+                Arguments.of("Weird Quotes", "'\"'string\"'\"", Arrays.asList(
                         new Token(Token.Type.CHARACTER, "'\"'", 0),
                         new Token(Token.Type.IDENTIFIER, "string", 3),
                         new Token(Token.Type.STRING, "\"'\"", 9)
