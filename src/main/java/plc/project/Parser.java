@@ -356,7 +356,8 @@ public final class Parser {
      * Parses the {@code multiplicative-expression} rule.
      */
     public Ast.Expression parseMultiplicativeExpression() throws ParseException {
-        Ast.Expression left = parsePrimaryExpression();
+        //Ast.Expression left = parsePrimaryExpression();
+        Ast.Expression left = parseSecondaryExpression();
 
         while (match("*", "/")) {
             String operator = tokens.get(-1).getLiteral();
@@ -388,6 +389,16 @@ public final class Parser {
 
             // Convert the current receiver into a function call
             receiver = new Ast.Expression.Function(Optional.of(receiver), null, arguments);
+        }
+
+        // Handle member access if '.' is present
+        while (peek(".")) {  // Member access
+            match(".");  // Consume the dot
+            if (!match(Token.Type.IDENTIFIER)) {
+                throw new ParseException("Expected identifier after '.'", tokens.get(0).getIndex());
+            }
+            String member = tokens.get(-1).getLiteral();  // Get the member name
+            receiver = new Ast.Expression.Access(Optional.of(receiver), member);
         }
 
         return receiver;
@@ -564,3 +575,86 @@ public final class Parser {
     }
 
 }
+
+
+/*
+// Handle function calls if '(' is present
+    while (match("(")) {
+        List<Ast.Expression> arguments = new ArrayList<>();
+        if (!peek(")")) {
+            do {
+                arguments.add(parseExpression());
+            } while (match(","));
+        }
+
+        if (!match(")")) {
+            throw new ParseException("Expected closing parenthesis ')'", tokens.get(0).getIndex());
+        }
+
+        // Convert the current receiver into a function call
+        receiver = new Ast.Expression.Function(Optional.of(receiver), null, arguments);
+    }
+
+    // Handle member access if '.' is present
+    while (peek(".")) {  // Member access
+        match(".");  // Consume the dot
+        if (!match(Token.Type.IDENTIFIER)) {
+            throw new ParseException("Expected identifier after '.'", tokens.get(0).getIndex());
+        }
+        String member = tokens.get(-1).getLiteral();  // Get the member name
+        receiver = new Ast.Expression.Access(Optional.of(receiver), member);
+    }
+
+    return receiver;
+ */
+
+
+
+/*
+Ast.Expression primary = null;
+
+        if (peek(Token.Type.INTEGER)) {
+            // Integer literal
+            BigInteger val = new BigInteger(tokens.get(0).getLiteral());
+            match(Token.Type.INTEGER);
+            primary = new Ast.Expression.Literal(val);
+        } else if (peek(Token.Type.DECIMAL)) {
+            // Decimal literal
+            BigDecimal val = new BigDecimal(tokens.get(0).getLiteral());
+            match(Token.Type.DECIMAL);
+            primary = new Ast.Expression.Literal(val);
+        } else if (peek(Token.Type.CHARACTER)) {
+            // Character literal
+            if (tokens.get(0).getLiteral().length() < 4) {
+                char c = tokens.get(0).getLiteral().charAt(1);
+                match(Token.Type.CHARACTER);
+                primary = new Ast.Expression.Literal(c);
+            } else { // escape char
+                char c = tokens.get(0).getLiteral().charAt(1);
+                match(Token.Type.CHARACTER);
+                primary = new Ast.Expression.Literal(c);
+            }
+
+        } else if (peek(Token.Type.STRING)) {
+            // String literal
+            match(Token.Type.STRING);
+            primary = new Ast.Expression.Literal(tokens.get(0).getLiteral());
+        } else if (peek(Token.Type.IDENTIFIER)) {
+            // Variable reference
+            String identifier = tokens.get(0).getLiteral();
+            match(Token.Type.IDENTIFIER);
+            primary = new Ast.Expression.Access(Optional.empty(), identifier);
+        } else if (match("(")) {
+            // Grouped expression (e.g., "(expr)")
+            Ast.Expression expression = parseExpression();
+            if (!match(")")) {
+                throw new ParseException("Expected closing parenthesis ')'", tokens.get(0).getIndex());
+            }
+            primary = new Ast.Expression.Group(expression);
+        } else {
+            throw new ParseException("Expected expression", tokens.get(0).getIndex());
+        }
+
+        // Call parseSecondaryExpression to handle additional constructs
+        return parseSecondaryExpression(primary);
+ */
