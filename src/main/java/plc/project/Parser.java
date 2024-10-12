@@ -313,7 +313,7 @@ public final class Parser {
     public Ast.Expression parseLogicalExpression() throws ParseException {
         Ast.Expression left = parseEqualityExpression();
 
-        while (match("&&", "||")) {
+        while (peek("&&") || match( "||")) {
             String operator = tokens.get(-1).getLiteral();
             Ast.Expression right = parseEqualityExpression();
             left = new Ast.Expression.Binary(operator, left, right);
@@ -328,7 +328,7 @@ public final class Parser {
     public Ast.Expression parseEqualityExpression() throws ParseException {
         Ast.Expression left = parseAdditiveExpression();
 
-        while (match("==", "!=")) {
+        while (peek("==") || match("!=")) {
             String operator = tokens.get(-1).getLiteral();
             Ast.Expression right = parseAdditiveExpression();
             left = new Ast.Expression.Binary(operator, left, right);
@@ -343,7 +343,7 @@ public final class Parser {
     public Ast.Expression parseAdditiveExpression() throws ParseException {
         Ast.Expression left = parseMultiplicativeExpression();
 
-        while (match("+", "-")) {
+        while (peek("-") || match("+")) {
             String operator = tokens.get(-1).getLiteral();
             Ast.Expression right = parseMultiplicativeExpression();
             left = new Ast.Expression.Binary(operator, left, right);
@@ -359,7 +359,7 @@ public final class Parser {
         //Ast.Expression left = parsePrimaryExpression();
         Ast.Expression left = parseSecondaryExpression();
 
-        while (match("*", "/")) {
+        while (peek ("*") || match("/")) {
             String operator = tokens.get(-1).getLiteral();
             Ast.Expression right = parsePrimaryExpression();
             left = new Ast.Expression.Binary(operator, left, right);
@@ -457,8 +457,11 @@ public final class Parser {
         } else if (match("(")) {
             // Grouped expression (e.g., "(expr)")
             Ast.Expression expression = parseExpression();
-            if (!match(")")) {
-                throw new ParseException("Expected closing parenthesis ')'", tokens.get(0).getIndex());
+            if (!peek(")")) {
+                if (!peek("+") && !peek("-") && !peek("*") && !peek("/") && !peek("&&") && !peek("||") && !peek("<") && !peek("<=") && !peek(">") && !peek(">=") && !peek("==") && !peek("!=")) {
+                    match(")");
+                    throw new ParseException("Expected closing parenthesis ')'", tokens.get(0).getIndex());
+                }
             }
             return new Ast.Expression.Group(expression);
 
