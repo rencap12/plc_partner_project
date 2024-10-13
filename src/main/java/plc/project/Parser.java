@@ -333,9 +333,13 @@ public final class Parser {
         Ast.Expression left = parseAdditiveExpression();
 
         while (peek("==") || match("!=")) {
-            String operator = tokens.get(-1).getLiteral();
+            String operator = tokens.get(0).getLiteral();
+            match(Token.Type.OPERATOR);
             Ast.Expression right = parseAdditiveExpression();
-            left = new Ast.Expression.Binary(operator, left, right);
+            if (!peek("==") && !peek("!="))
+                return new Ast.Expression.Binary(operator, left, right);
+            else
+                left = new Ast.Expression.Binary(operator, left, right);
         }
 
         return left;
@@ -364,9 +368,13 @@ public final class Parser {
         Ast.Expression left = parseSecondaryExpression();
 
         while (peek ("*") || match("/")) {
-            String operator = tokens.get(-1).getLiteral();
-            Ast.Expression right = parsePrimaryExpression();
-            left = new Ast.Expression.Binary(operator, left, right);
+            String operator = tokens.get(0).getLiteral();
+            match(Token.Type.OPERATOR);
+            Ast.Expression right = parseSecondaryExpression();
+            if (!peek("*") && !peek("/"))
+                return new Ast.Expression.Binary(operator, left, right);
+            else
+                left = new Ast.Expression.Binary(operator, left, right);
         }
 
         return left;
