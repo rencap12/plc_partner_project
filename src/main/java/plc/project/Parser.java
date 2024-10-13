@@ -434,7 +434,6 @@ public final class Parser {
                 match(Token.Type.CHARACTER);
                 return new Ast.Expression.Literal(c);
             }
-
         } else if (peek(Token.Type.STRING)) {
             // String literal
             match(Token.Type.STRING);
@@ -445,6 +444,19 @@ public final class Parser {
             String identifier = tokens.get(0).getLiteral();
 
             match(Token.Type.IDENTIFIER);
+            if (tokens.get(-1).getLiteral().equals("NIL")) {
+                match("NIL");
+                return new Ast.Expression.Literal(null);
+            }
+            else if (tokens.get(-1).getLiteral().equals("TRUE")) {
+                Boolean temp = true;
+                return new Ast.Expression.Literal(temp);
+            }
+            else if (tokens.get(-1).getLiteral().equals("FALSE")) {
+                Boolean temp = false;
+                return new Ast.Expression.Literal(temp);
+            }
+
 
             // Check if it's a function call
             if (peek("(")) {
