@@ -437,7 +437,16 @@ public final class Parser {
         } else if (peek(Token.Type.STRING)) {
             // String literal
             match(Token.Type.STRING);
-            return new Ast.Expression.Literal(tokens.get(0).getLiteral());
+            String temp = tokens.get(-1).getLiteral();
+            temp = temp.replace("\\\"", "\"");
+            temp = temp.replace("\\\\", "\\");
+            temp = temp.replace("\\\'", "\'");
+            temp = temp.replace("\\b", "\b");
+            temp = temp.replace("\\n", "\n");
+            temp = temp.replace("\\r", "\r");
+            temp = temp.replace("\\t", "\t");
+            temp = temp.substring(1,temp.length() - 1); // remove ""
+            return new Ast.Expression.Literal(temp);
         } else if (peek(Token.Type.IDENTIFIER)) {
 
             // Variable reference or function call
