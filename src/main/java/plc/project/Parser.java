@@ -314,9 +314,13 @@ public final class Parser {
         Ast.Expression left = parseEqualityExpression();
 
         while (peek("&&") || match("||")) {
-            String operator = tokens.get(-1).getLiteral();
+            String operator = tokens.get(0).getLiteral();
+            match(Token.Type.OPERATOR);
             Ast.Expression right = parseEqualityExpression();
-            left = new Ast.Expression.Binary(operator, left, right);
+            if (!peek("&&") && !peek("||"))
+                return new Ast.Expression.Binary(operator, left, right);
+            else
+                left = new Ast.Expression.Binary(operator, left, right);
         }
 
         return left;
