@@ -314,7 +314,7 @@ public final class Parser {
     public Ast.Expression parseLogicalExpression() throws ParseException {
         Ast.Expression left = parseEqualityExpression();
 
-        while (peek("&&") || match("||")) {
+        while (peek("&&") || peek("||")) {
             String operator = tokens.get(0).getLiteral();
             match(Token.Type.OPERATOR);
             Ast.Expression right = parseEqualityExpression();
@@ -333,11 +333,11 @@ public final class Parser {
     public Ast.Expression parseEqualityExpression() throws ParseException {
         Ast.Expression left = parseAdditiveExpression();
 
-        while (peek("==") || match("!=")) {
+        while (peek("==") || peek("!=") || peek("<") || peek("<=") || peek(">") || peek(">=")) {
             String operator = tokens.get(0).getLiteral();
             match(Token.Type.OPERATOR);
             Ast.Expression right = parseAdditiveExpression();
-            if (!peek("==") && !peek("!="))
+            if (!peek("==") && !peek("!=") || peek("<") || peek("<=") || peek(">") || peek(">="))
                 return new Ast.Expression.Binary(operator, left, right);
             else
                 left = new Ast.Expression.Binary(operator, left, right);
@@ -352,7 +352,8 @@ public final class Parser {
     public Ast.Expression parseAdditiveExpression() throws ParseException {
         Ast.Expression left = parseMultiplicativeExpression();
 
-        while (peek("-") || match("+")) {
+        while (peek("-") || peek("+")) {
+            match(Token.Type.OPERATOR);
             String operator = tokens.get(-1).getLiteral();
             Ast.Expression right = parseMultiplicativeExpression();
             left = new Ast.Expression.Binary(operator, left, right);
@@ -368,7 +369,7 @@ public final class Parser {
         //Ast.Expression left = parsePrimaryExpression();
         Ast.Expression left = parseSecondaryExpression();
 
-        while (peek ("*") || match("/")) {
+        while (peek ("*") || peek("/")) {
             String operator = tokens.get(0).getLiteral();
             match(Token.Type.OPERATOR);
             Ast.Expression right = parseSecondaryExpression();
