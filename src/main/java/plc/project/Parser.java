@@ -447,13 +447,28 @@ public final class Parser {
         } else if (peek(Token.Type.CHARACTER)) {
             // Character literal
             // 's' e.g.
-            if (tokens.get(0).getLiteral().length() < 4) {
+            if (tokens.get(0).getLiteral().length() < 4) { // not escape char
                 char c = tokens.get(0).getLiteral().charAt(1);
                 // System.out.println(c);
                 match(Token.Type.CHARACTER);
                 return new Ast.Expression.Literal(c);
             } else { // escape char
-                char c = tokens.get(0).getLiteral().charAt(1);
+//                char c = tokens.get(0).getLiteral().charAt(1);
+//                match(Token.Type.CHARACTER);
+//                return new Ast.Expression.Literal(c);
+                String temp = tokens.get(0).getLiteral();
+                // BREAK THIS INTO MODULAR METHOD: ////////////////////////////
+                temp = temp.replace("\\b", "\b");
+                temp = temp.replace("\\n", "\n");
+                temp = temp.replace("\\r", "\r");
+                temp = temp.replace("\\t", "\t");
+                if (temp.equals("'\\\"'"))
+                    temp = "'\"'";
+                if (temp.equals("'\\\\'"))
+                    temp = "'\\'";
+                if (temp.equals("'\\\''"))
+                    temp = "'\''";
+                Character c = temp.charAt(1);
                 match(Token.Type.CHARACTER);
                 return new Ast.Expression.Literal(c);
             }
