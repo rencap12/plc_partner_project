@@ -293,10 +293,11 @@ public final class Parser {
                 throw new ParseException("Expected ';' after assignment", tokens.get(0).getIndex());
             }
             return new Ast.Statement.Assignment(receiver, value);
-        } else if (match(";")) {
+        } else if (peek(";")) {
+            match(";");
             return new Ast.Statement.Expression(receiver);
         } else {
-            throw new ParseException("Expected '=' or ';'", tokens.get(0).getIndex());
+            throw new ParseException("Expected '=' or ';'", tokens.index);
         }
     }
 
@@ -385,35 +386,45 @@ public final class Parser {
      */
     public Ast.Expression parseSecondaryExpression() throws ParseException {
         Ast.Expression receiver = parsePrimaryExpression();
+        if (!peek(".")) { // nothing after primary
+            return receiver;
+        } else {
+            String member = "";
+            while (peek(".")) { // continue to get members
+                match(".");
+                if (peek(Token.Type.IDENTIFIER)) {
+                    member = tokens.get(0).getLiteral();
+                    match(Token.Type.IDENTIFIER);
+                } // throw error if not identifier - implement later
 
-        // Handle function calls if '(' is present
-        while (match("(")) {
-            List<Ast.Expression> arguments = new ArrayList<>();
-            if (!peek(")")) {
-                do {
-                    arguments.add(parseExpression());
-                } while (match(","));
+                // get ( could be start of function call
+                if (peek("(")) {
+                    match("(");
+
+                    List<Ast.Expression> arguments = new ArrayList<Ast.Expression>();
+
+                    while (!peek(")")) {
+                        arguments.add(parseExpression());
+                        if (peek(","))
+                            match(",");
+                    }
+                    // ensure close )
+                    match(")");
+                    if (!peek(".")) { // just function call
+                        return new Ast.Expression.Function(Optional.of(receiver), member, arguments);
+                    } else { // keep going
+                        receiver = new Ast.Expression.Function(Optional.of(receiver), member, arguments);
+                    }
+                } else {
+                    if (!peek(".")) {
+                        return new Ast.Expression.Access(Optional.of(receiver), member);
+                    } else {
+                        receiver = new Ast.Expression.Access(Optional.of(receiver), member);
+                    }
+                }
             }
-
-            if (!match(")")) {
-                throw new ParseException("Expected closing parenthesis ')'", tokens.get(0).getIndex());
-            }
-
-            // Convert the current receiver into a function call
-            receiver = new Ast.Expression.Function(Optional.of(receiver), null, arguments);
         }
-
-        // Handle member access if '.' is present
-        while (peek(".")) {  // Member access
-            match(".");  // Consume the dot
-            if (!match(Token.Type.IDENTIFIER)) {
-                throw new ParseException("Expected identifier after '.'", tokens.get(0).getIndex());
-            }
-            String member = tokens.get(-1).getLiteral();  // Get the member name
-            receiver = new Ast.Expression.Access(Optional.of(receiver), member);
-        }
-
-        return receiver;
+        return null;
     }
 
     /**
