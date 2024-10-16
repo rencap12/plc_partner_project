@@ -290,7 +290,7 @@ public final class Parser {
         if (match("=")) {
             Ast.Expression value = parseExpression();
             if (!match(";")) {
-                throw new ParseException("Expected ';' after assignment", tokens.get(0).getIndex());
+                throw new ParseException("Expected ';' after assignment", tokens.index);
             }
             return new Ast.Statement.Assignment(receiver, value);
         } else if (peek(";")) {
