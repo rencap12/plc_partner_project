@@ -51,11 +51,11 @@ public final class Parser {
     public Ast.Field parseField() throws ParseException {
         boolean isConstant = match("LET");
         if (!isConstant && !match("VAR")) {
-            throw new ParseException("Expected 'LET' or 'VAR'", tokens.get(0).getIndex());
+            throw new ParseException("Expected 'LET' or 'VAR'", tokens.index);
         }
 
         if (!peek(Token.Type.IDENTIFIER)) {
-            throw new ParseException("Expected identifier", tokens.get(0).getIndex());
+            throw new ParseException("Expected identifier", tokens.index);
         }
         String name = tokens.get(0).getLiteral();
         tokens.advance();
@@ -66,7 +66,7 @@ public final class Parser {
         }
 
         if (!match(";")) {
-            throw new ParseException("Expected ';'", tokens.get(0).getIndex());
+            throw new ParseException("Expected ';'", tokens.index);
         }
 
         return new Ast.Field(name, isConstant, value);
@@ -78,24 +78,24 @@ public final class Parser {
      */
     public Ast.Method parseMethod() throws ParseException {
         if (!match("FUN")) {
-            throw new ParseException("Expected 'FUN'", tokens.get(0).getIndex());
+            throw new ParseException("Expected 'FUN'", tokens.index);
         }
 
         if (!peek(Token.Type.IDENTIFIER)) {
-            throw new ParseException("Expected method name", tokens.get(0).getIndex());
+            throw new ParseException("Expected method name", tokens.index);
         }
         String name = tokens.get(0).getLiteral();
         tokens.advance();
 
         if (!match("(")) {
-            throw new ParseException("Expected '(' after method name", tokens.get(0).getIndex());
+            throw new ParseException("Expected '(' after method name", tokens.index);
         }
 
         List<String> parameters = new ArrayList<>();
         if (!peek(")")) {
             do {
                 if (!peek(Token.Type.IDENTIFIER)) {
-                    throw new ParseException("Expected parameter name", tokens.get(0).getIndex());
+                    throw new ParseException("Expected parameter name", tokens.index);
                 }
                 parameters.add(tokens.get(0).getLiteral());
                 tokens.advance();
@@ -103,11 +103,11 @@ public final class Parser {
         }
 
         if (!match(")")) {
-            throw new ParseException("Expected ')'", tokens.get(0).getIndex());
+            throw new ParseException("Expected ')'", tokens.index);
         }
 
         if (!match("{")) {
-            throw new ParseException("Expected '{' at start of method body", tokens.get(0).getIndex());
+            throw new ParseException("Expected '{' at start of method body", tokens.index);
         }
 
         List<Ast.Statement> statements = new ArrayList<>();
@@ -116,7 +116,7 @@ public final class Parser {
         }
 
         if (!match("}")) {
-            throw new ParseException("Expected '}' at end of method body", tokens.get(0).getIndex());
+            throw new ParseException("Expected '}' at end of method body", tokens.index);
         }
 
         return new Ast.Method(name, parameters, statements);
@@ -150,11 +150,11 @@ public final class Parser {
      */
     public Ast.Statement.Declaration parseDeclarationStatement() throws ParseException {
         if (!match("LET")) {
-            throw new ParseException("Expected 'LET'", tokens.get(0).getIndex());
+            throw new ParseException("Expected 'LET'", tokens.index);
         }
 
         if (!peek(Token.Type.IDENTIFIER)) {
-            throw new ParseException("Expected variable name", tokens.get(0).getIndex());
+            throw new ParseException("Expected variable name", tokens.index);
         }
         String name = tokens.get(0).getLiteral();
         tokens.advance();
@@ -165,7 +165,7 @@ public final class Parser {
         }
 
         if (!match(";")) {
-            throw new ParseException("Expected ';'", tokens.get(0).getIndex());
+            throw new ParseException("Expected ';'", tokens.index);
         }
 
         return new Ast.Statement.Declaration(name, value);
@@ -178,13 +178,13 @@ public final class Parser {
      */
     public Ast.Statement.If parseIfStatement() throws ParseException {
         if (!match("IF")) {
-            throw new ParseException("Expected 'IF'", tokens.get(0).getIndex());
+            throw new ParseException("Expected 'IF'", tokens.index);
         }
 
         Ast.Expression condition = parseExpression();
 
         if (!match("{")) {
-            throw new ParseException("Expected '{' after 'IF' condition", tokens.get(0).getIndex());
+            throw new ParseException("Expected '{' after 'IF' condition", tokens.index);
         }
 
         List<Ast.Statement> thenStatements = new ArrayList<>();
@@ -193,19 +193,19 @@ public final class Parser {
         }
 
         if (!match("}")) {
-            throw new ParseException("Expected '}' at end of 'then' block", tokens.get(0).getIndex());
+            throw new ParseException("Expected '}' at end of 'then' block", tokens.index);
         }
 
         List<Ast.Statement> elseStatements = new ArrayList<>();
         if (match("ELSE")) {
             if (!match("{")) {
-                throw new ParseException("Expected '{' after 'ELSE'", tokens.get(0).getIndex());
+                throw new ParseException("Expected '{' after 'ELSE'", tokens.index);
             }
             while (!peek("}")) {
                 elseStatements.add(parseStatement());
             }
             if (!match("}")) {
-                throw new ParseException("Expected '}' at end of 'else' block", tokens.get(0).getIndex());
+                throw new ParseException("Expected '}' at end of 'else' block", tokens.index);
             }
         }
 
@@ -219,7 +219,7 @@ public final class Parser {
      */
     public Ast.Statement.For parseForStatement() throws ParseException {
         if (!match("FOR")) {
-            throw new ParseException("Expected 'FOR'", tokens.get(0).getIndex());
+            throw new ParseException("Expected 'FOR'", tokens.index);
         }
 
         Ast.Statement initialization = parseStatement();
@@ -229,7 +229,7 @@ public final class Parser {
         Ast.Statement increment = parseStatement();
 
         if (!match("{")) {
-            throw new ParseException("Expected '{' after 'FOR' condition", tokens.get(0).getIndex());
+            throw new ParseException("Expected '{' after 'FOR' condition", tokens.index);
         }
 
         List<Ast.Statement> statements = new ArrayList<>();
@@ -247,13 +247,13 @@ public final class Parser {
      */
     public Ast.Statement.While parseWhileStatement() throws ParseException {
         if (!match("WHILE")) {
-            throw new ParseException("Expected 'WHILE'", tokens.get(0).getIndex());
+            throw new ParseException("Expected 'WHILE'", tokens.index);
         }
 
         Ast.Expression condition = parseExpression();
 
         if (!match("{")) {
-            throw new ParseException("Expected '{' after 'WHILE' condition", tokens.get(0).getIndex());
+            throw new ParseException("Expected '{' after 'WHILE' condition", tokens.index);
         }
 
         List<Ast.Statement> statements = new ArrayList<>();
@@ -271,13 +271,13 @@ public final class Parser {
      */
     public Ast.Statement.Return parseReturnStatement() throws ParseException {
         if (!match("RETURN")) {
-            throw new ParseException("Expected 'RETURN'", tokens.get(0).getIndex());
+            throw new ParseException("Expected 'RETURN'", tokens.index);
         }
 
         Ast.Expression value = parseExpression();
 
         if (!match(";")) {
-            throw new ParseException("Expected ';' after return statement", tokens.get(0).getIndex());
+            throw new ParseException("Expected ';' after return statement", tokens.index);
         }
 
         return new Ast.Statement.Return(value);
@@ -504,26 +504,14 @@ public final class Parser {
             if (!peek(")")) {
                 if (!peek("+") && !peek("-") && !peek("*") && !peek("/") && !peek("&&") && !peek("||") && !peek("<") && !peek("<=") && !peek(">") && !peek(">=") && !peek("==") && !peek("!=")) {
                     match(")");
-                    throw new ParseException("Expected closing parenthesis ')'", tokens.get(0).getIndex());
+                    throw new ParseException("Expected closing parenthesis ')'", tokens.index);
                 }
             }
             return new Ast.Expression.Group(expression);
 
         } else {
-            throw new ParseException("Expected expression", tokens.get(0).getIndex());
+            throw new ParseException("Expected expression", tokens.index);
         }
-
-//        } else if (match("(")) { WORK ON GROUP EXPRESSION
-//            // Grouped expression (parentheses)
-//            Ast.Expression expression = parseExpression();
-//            if (!match(")")) {
-//                throw new ParseException("Expected closing parenthesis ')'", tokens.get(0).getIndex());
-//            }
-//            return new Ast.Expression.Group(expression);
-//        }
-
-            // Invalid expression
-//            throw new ParseException("Expected expression", tokens.get(0).getIndex());
 
     }
 
@@ -539,7 +527,7 @@ public final class Parser {
         }
 
         if (!match(")")) {
-            throw new ParseException("Expected closing parenthesis ')'", tokens.get(0).getIndex());
+            throw new ParseException("Expected closing parenthesis ')'", tokens.index);
         }
 
         return new Ast.Expression.Function(receiver, name, arguments);
@@ -622,86 +610,3 @@ public final class Parser {
     }
 
 }
-
-
-/*
-// Handle function calls if '(' is present
-    while (match("(")) {
-        List<Ast.Expression> arguments = new ArrayList<>();
-        if (!peek(")")) {
-            do {
-                arguments.add(parseExpression());
-            } while (match(","));
-        }
-
-        if (!match(")")) {
-            throw new ParseException("Expected closing parenthesis ')'", tokens.get(0).getIndex());
-        }
-
-        // Convert the current receiver into a function call
-        receiver = new Ast.Expression.Function(Optional.of(receiver), null, arguments);
-    }
-
-    // Handle member access if '.' is present
-    while (peek(".")) {  // Member access
-        match(".");  // Consume the dot
-        if (!match(Token.Type.IDENTIFIER)) {
-            throw new ParseException("Expected identifier after '.'", tokens.get(0).getIndex());
-        }
-        String member = tokens.get(-1).getLiteral();  // Get the member name
-        receiver = new Ast.Expression.Access(Optional.of(receiver), member);
-    }
-
-    return receiver;
- */
-
-
-
-/*
-Ast.Expression primary = null;
-
-        if (peek(Token.Type.INTEGER)) {
-            // Integer literal
-            BigInteger val = new BigInteger(tokens.get(0).getLiteral());
-            match(Token.Type.INTEGER);
-            primary = new Ast.Expression.Literal(val);
-        } else if (peek(Token.Type.DECIMAL)) {
-            // Decimal literal
-            BigDecimal val = new BigDecimal(tokens.get(0).getLiteral());
-            match(Token.Type.DECIMAL);
-            primary = new Ast.Expression.Literal(val);
-        } else if (peek(Token.Type.CHARACTER)) {
-            // Character literal
-            if (tokens.get(0).getLiteral().length() < 4) {
-                char c = tokens.get(0).getLiteral().charAt(1);
-                match(Token.Type.CHARACTER);
-                primary = new Ast.Expression.Literal(c);
-            } else { // escape char
-                char c = tokens.get(0).getLiteral().charAt(1);
-                match(Token.Type.CHARACTER);
-                primary = new Ast.Expression.Literal(c);
-            }
-
-        } else if (peek(Token.Type.STRING)) {
-            // String literal
-            match(Token.Type.STRING);
-            primary = new Ast.Expression.Literal(tokens.get(0).getLiteral());
-        } else if (peek(Token.Type.IDENTIFIER)) {
-            // Variable reference
-            String identifier = tokens.get(0).getLiteral();
-            match(Token.Type.IDENTIFIER);
-            primary = new Ast.Expression.Access(Optional.empty(), identifier);
-        } else if (match("(")) {
-            // Grouped expression (e.g., "(expr)")
-            Ast.Expression expression = parseExpression();
-            if (!match(")")) {
-                throw new ParseException("Expected closing parenthesis ')'", tokens.get(0).getIndex());
-            }
-            primary = new Ast.Expression.Group(expression);
-        } else {
-            throw new ParseException("Expected expression", tokens.get(0).getIndex());
-        }
-
-        // Call parseSecondaryExpression to handle additional constructs
-        return parseSecondaryExpression(primary);
- */
