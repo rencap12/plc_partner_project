@@ -177,39 +177,41 @@ public final class Parser {
      * {@code IF}.
      */
     public Ast.Statement.If parseIfStatement() throws ParseException {
-        if (!match("IF")) {
+        if (!peek("IF")) {
             throw new ParseException("Expected 'IF'", tokens.index);
         }
 
+        match("IF");
+
         Ast.Expression condition = parseExpression();
 
-        if (!match("{")) {
-            throw new ParseException("Expected '{' after 'IF' condition", tokens.index);
-        }
+        if (peek("DO")) {
+            match("DO");
 
-        List<Ast.Statement> thenStatements = new ArrayList<>();
-        while (!peek("}")) {
-            thenStatements.add(parseStatement());
-        }
+            List<Ast.Statement> elseStatements = new ArrayList<Ast.Statement>();
+            List<Ast.Statement> thenStatements = new ArrayList<>(); // expr after IF
 
-        if (!match("}")) {
-            throw new ParseException("Expected '}' at end of 'then' block", tokens.index);
-        }
-
-        List<Ast.Statement> elseStatements = new ArrayList<>();
-        if (match("ELSE")) {
-            if (!match("{")) {
-                throw new ParseException("Expected '{' after 'ELSE'", tokens.index);
+            while (!peek("ELSE") && !peek("END")) {
+                thenStatements.add(parseStatement());
             }
-            while (!peek("}")) {
-                elseStatements.add(parseStatement());
+
+            if (peek("ELSE")) {
+                match("ELSE");
+
+                while (!peek("END")) {
+                    elseStatements.add(parseStatement());
+                }
             }
-            if (!match("}")) {
-                throw new ParseException("Expected '}' at end of 'else' block", tokens.index);
+            if (peek("END")){
+                match("END");
+                return new Ast.Statement.If(condition, thenStatements, elseStatements);
+            } else {
+                throw new ParseException("NO END, ", tokens.index);
             }
         }
 
-        return new Ast.Statement.If(condition, thenStatements, elseStatements);
+        throw new ParseException("NO DO, ", tokens.index);
+
     }
 
     /**
@@ -228,9 +230,9 @@ public final class Parser {
 
         Ast.Statement increment = parseStatement();
 
-        if (!match("{")) {
-            throw new ParseException("Expected '{' after 'FOR' condition", tokens.index);
-        }
+//        if (!match("{")) {
+//            throw new ParseException("Expected '{' after 'FOR' condition", tokens.index);
+//        }
 
         List<Ast.Statement> statements = new ArrayList<>();
         while (!match("}")) {
@@ -246,22 +248,40 @@ public final class Parser {
      * {@code WHILE}.
      */
     public Ast.Statement.While parseWhileStatement() throws ParseException {
-        if (!match("WHILE")) {
+        if (!peek("WHILE")) {
             throw new ParseException("Expected 'WHILE'", tokens.index);
         }
 
+        match("WHILE"); // while key word found, move forward
         Ast.Expression condition = parseExpression();
 
-        if (!match("{")) {
-            throw new ParseException("Expected '{' after 'WHILE' condition", tokens.index);
+//        if (!match("{")) {
+//            throw new ParseException("Expected '{' after 'WHILE' condition", tokens.index);
+//        }
+
+        if (peek("DO")){
+            match("DO");
         }
+        // make logic to catch statements if no DO present
+
+
+//        while (!match("}")) {
+//            statements.add(parseStatement());
+//        }
 
         List<Ast.Statement> statements = new ArrayList<>();
-        while (!match("}")) {
+
+        while (!peek("END")){
             statements.add(parseStatement());
         }
 
-        return new Ast.Statement.While(condition, statements);
+        if (peek("END")){
+            match("END");
+            return new Ast.Statement.While(condition, statements);
+        } else { // no end
+            throw new ParseException("NO END", tokens.index);
+        }
+
     }
 
     /**
