@@ -337,7 +337,7 @@ public final class Parser {
             String operator = tokens.get(0).getLiteral();
             match(Token.Type.OPERATOR);
             Ast.Expression right = parseAdditiveExpression();
-            if (!peek("==") && !peek("!=") || peek("<") || peek("<=") || peek(">") || peek(">="))
+            if (!peek("==") && !peek("!=") && !peek("<") && !peek("<=") && !peek(">") && !peek(">="))
                 return new Ast.Expression.Binary(operator, left, right);
             else
                 left = new Ast.Expression.Binary(operator, left, right);
