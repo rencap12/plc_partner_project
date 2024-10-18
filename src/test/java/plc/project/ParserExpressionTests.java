@@ -346,179 +346,179 @@ final class ParserExpressionTests {
 
     private static Stream<Arguments> testBinaryExpression() {
         return Stream.of(
-//                Arguments.of("Binary And",
-//                        Arrays.asList(
-//                                // expr1 && expr2
-//                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-//                                new Token(Token.Type.OPERATOR, "&&", 6),
-//                                new Token(Token.Type.IDENTIFIER, "expr2", 10)
-//                        ),
-//                        new Ast.Expression.Binary("&&",
-//                                new Ast.Expression.Access(Optional.empty(), "expr1"),
-//                                new Ast.Expression.Access(Optional.empty(), "expr2")
-//                        )
-//                ),
-//                Arguments.of("Binary Equality",
-//                        Arrays.asList(
-//                                // expr1 == expr2
-//                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-//                                new Token(Token.Type.OPERATOR, "==", 6),
-//                                new Token(Token.Type.IDENTIFIER, "expr2", 9)
-//                        ),
-//                        new Ast.Expression.Binary("==",
-//                                new Ast.Expression.Access(Optional.empty(), "expr1"),
-//                                new Ast.Expression.Access(Optional.empty(), "expr2")
-//                        )
-//                ),
-//                Arguments.of("Binary Addition",
-//                        Arrays.asList(
-//                                // expr1 + expr2
-//                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-//                                new Token(Token.Type.OPERATOR, "+", 6),
-//                                new Token(Token.Type.IDENTIFIER, "expr2", 8)
-//                        ),
-//                        new Ast.Expression.Binary("+",
-//                                new Ast.Expression.Access(Optional.empty(), "expr1"),
-//                                new Ast.Expression.Access(Optional.empty(), "expr2")
-//                        )
-//                ),
-//                Arguments.of("Binary Multiplication",
-//                        Arrays.asList(
-//                                // expr1 * expr2
-//                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-//                                new Token(Token.Type.OPERATOR, "*", 6),
-//                                new Token(Token.Type.IDENTIFIER, "expr2", 8)
-//                        ),
-//                        new Ast.Expression.Binary("*",
-//                                new Ast.Expression.Access(Optional.empty(), "expr1"),
-//                                new Ast.Expression.Access(Optional.empty(), "expr2")
-//                        )
-//                ),
+                Arguments.of("Binary And",
+                        Arrays.asList(
+                                // expr1 && expr2
+                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                                new Token(Token.Type.OPERATOR, "&&", 6),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 10)
+                        ),
+                        new Ast.Expression.Binary("&&",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2")
+                        )
+                ),
+                Arguments.of("Binary Equality",
+                        Arrays.asList(
+                                // expr1 == expr2
+                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                                new Token(Token.Type.OPERATOR, "==", 6),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 9)
+                        ),
+                        new Ast.Expression.Binary("==",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2")
+                        )
+                ),
+                Arguments.of("Binary Addition",
+                        Arrays.asList(
+                                // expr1 + expr2
+                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                                new Token(Token.Type.OPERATOR, "+", 6),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 8)
+                        ),
+                        new Ast.Expression.Binary("+",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2")
+                        )
+                ),
+                Arguments.of("Binary Multiplication",
+                        Arrays.asList(
+                                // expr1 * expr2
+                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                                new Token(Token.Type.OPERATOR, "*", 6),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 8)
+                        ),
+                        new Ast.Expression.Binary("*",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2")
+                        )
+                ),
                 // Test for expr1 || expr2
-//                Arguments.of("Or",
-//                        Arrays.asList(
-//                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-//                                new Token(Token.Type.OPERATOR, "||", 6),
-//                                new Token(Token.Type.IDENTIFIER, "expr2", 10)
-//                        ),
-//                        new Ast.Expression.Binary("||",
-//                                new Ast.Expression.Access(Optional.empty(), "expr1"),
-//                                new Ast.Expression.Access(Optional.empty(), "expr2"))
-//                ),
-//
-//                // Comparison Operations
-//
-//                // Test for expr1 < expr2
-//                Arguments.of("Less Than",
-//                        Arrays.asList(
-//                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-//                                new Token(Token.Type.OPERATOR, "<", 6),
-//                                new Token(Token.Type.IDENTIFIER, "expr2", 8)
-//                        ),
-//                        new Ast.Expression.Binary("<",
-//                                new Ast.Expression.Access(Optional.empty(), "expr1"),
-//                                new Ast.Expression.Access(Optional.empty(), "expr2"))
-//                ),
-//
-//                // Test for expr1 <= expr2
-//                Arguments.of("Less Than or Equal",
-//                        Arrays.asList(
-//                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-//                                new Token(Token.Type.OPERATOR, "<=", 6),
-//                                new Token(Token.Type.IDENTIFIER, "expr2", 9)
-//                        ),
-//                        new Ast.Expression.Binary("<=",
-//                                new Ast.Expression.Access(Optional.empty(), "expr1"),
-//                                new Ast.Expression.Access(Optional.empty(), "expr2"))
-//                ),
-//
-//                // Test for expr1 > expr2
-//                Arguments.of("Greater Than",
-//                        Arrays.asList(
-//                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-//                                new Token(Token.Type.OPERATOR, ">", 6),
-//                                new Token(Token.Type.IDENTIFIER, "expr2", 8)
-//                        ),
-//                        new Ast.Expression.Binary(">",
-//                                new Ast.Expression.Access(Optional.empty(), "expr1"),
-//                                new Ast.Expression.Access(Optional.empty(), "expr2"))
-//                ),
-//
-//                // Test for expr1 >= expr2
-//                Arguments.of("Greater Than or Equal",
-//                        Arrays.asList(
-//                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-//                                new Token(Token.Type.OPERATOR, ">=", 6),
-//                                new Token(Token.Type.IDENTIFIER, "expr2", 9)
-//                        ),
-//                        new Ast.Expression.Binary(">=",
-//                                new Ast.Expression.Access(Optional.empty(), "expr1"),
-//                                new Ast.Expression.Access(Optional.empty(), "expr2"))
-//                ),
-//
-//                // Test for expr1 == expr2
-//                Arguments.of("Equal",
-//                        Arrays.asList(
-//                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-//                                new Token(Token.Type.OPERATOR, "==", 6),
-//                                new Token(Token.Type.IDENTIFIER, "expr2", 9)
-//                        ),
-//                        new Ast.Expression.Binary("==",
-//                                new Ast.Expression.Access(Optional.empty(), "expr1"),
-//                                new Ast.Expression.Access(Optional.empty(), "expr2"))
-//                ),
-//
-//                // Test for expr1 != expr2
-//                Arguments.of("Not Equal",
-//                        Arrays.asList(
-//                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-//                                new Token(Token.Type.OPERATOR, "!=", 6),
-//                                new Token(Token.Type.IDENTIFIER, "expr2", 9)
-//                        ),
-//                        new Ast.Expression.Binary("!=",
-//                                new Ast.Expression.Access(Optional.empty(), "expr1"),
-//                                new Ast.Expression.Access(Optional.empty(), "expr2"))
-//                ),
-//
-//                // Additive Operations
-//
-//                // Test for expr1 + expr2
-//                Arguments.of("Addition",
-//                        Arrays.asList(
-//                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-//                                new Token(Token.Type.OPERATOR, "+", 6),
-//                                new Token(Token.Type.IDENTIFIER, "expr2", 8)
-//                        ),
-//                        new Ast.Expression.Binary("+",
-//                                new Ast.Expression.Access(Optional.empty(), "expr1"),
-//                                new Ast.Expression.Access(Optional.empty(), "expr2"))
-//                ),
-//
-//                // Test for expr1 - expr2
-//                Arguments.of("Subtraction",
-//                        Arrays.asList(
-//                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-//                                new Token(Token.Type.OPERATOR, "-", 6),
-//                                new Token(Token.Type.IDENTIFIER, "expr2", 8)
-//                        ),
-//                        new Ast.Expression.Binary("-",
-//                                new Ast.Expression.Access(Optional.empty(), "expr1"),
-//                                new Ast.Expression.Access(Optional.empty(), "expr2"))
-//                ),
-//
-//                // Multiplicative Operations
-//
-//                // Test for expr1 * expr2
-//                Arguments.of("Multiplication",
-//                        Arrays.asList(
-//                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
-//                                new Token(Token.Type.OPERATOR, "*", 6),
-//                                new Token(Token.Type.IDENTIFIER, "expr2", 8)
-//                        ),
-//                        new Ast.Expression.Binary("*",
-//                                new Ast.Expression.Access(Optional.empty(), "expr1"),
-//                                new Ast.Expression.Access(Optional.empty(), "expr2"))
-//                ),
+                Arguments.of("Or",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                                new Token(Token.Type.OPERATOR, "||", 6),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 10)
+                        ),
+                        new Ast.Expression.Binary("||",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2"))
+                ),
+
+                // Comparison Operations
+
+                // Test for expr1 < expr2
+                Arguments.of("Less Than",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                                new Token(Token.Type.OPERATOR, "<", 6),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 8)
+                        ),
+                        new Ast.Expression.Binary("<",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2"))
+                ),
+
+                // Test for expr1 <= expr2
+                Arguments.of("Less Than or Equal",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                                new Token(Token.Type.OPERATOR, "<=", 6),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 9)
+                        ),
+                        new Ast.Expression.Binary("<=",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2"))
+                ),
+
+                // Test for expr1 > expr2
+                Arguments.of("Greater Than",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                                new Token(Token.Type.OPERATOR, ">", 6),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 8)
+                        ),
+                        new Ast.Expression.Binary(">",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2"))
+                ),
+
+                // Test for expr1 >= expr2
+                Arguments.of("Greater Than or Equal",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                                new Token(Token.Type.OPERATOR, ">=", 6),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 9)
+                        ),
+                        new Ast.Expression.Binary(">=",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2"))
+                ),
+
+                // Test for expr1 == expr2
+                Arguments.of("Equal",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                                new Token(Token.Type.OPERATOR, "==", 6),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 9)
+                        ),
+                        new Ast.Expression.Binary("==",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2"))
+                ),
+
+                // Test for expr1 != expr2
+                Arguments.of("Not Equal",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                                new Token(Token.Type.OPERATOR, "!=", 6),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 9)
+                        ),
+                        new Ast.Expression.Binary("!=",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2"))
+                ),
+
+                // Additive Operations
+
+                // Test for expr1 + expr2
+                Arguments.of("Addition",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                                new Token(Token.Type.OPERATOR, "+", 6),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 8)
+                        ),
+                        new Ast.Expression.Binary("+",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2"))
+                ),
+
+                // Test for expr1 - expr2
+                Arguments.of("Subtraction",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                                new Token(Token.Type.OPERATOR, "-", 6),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 8)
+                        ),
+                        new Ast.Expression.Binary("-",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2"))
+                ),
+
+                // Multiplicative Operations
+
+                // Test for expr1 * expr2
+                Arguments.of("Multiplication",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "expr1", 0),
+                                new Token(Token.Type.OPERATOR, "*", 6),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 8)
+                        ),
+                        new Ast.Expression.Binary("*",
+                                new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                new Ast.Expression.Access(Optional.empty(), "expr2"))
+                ),
 
                 // Test for expr1 / expr2
                 Arguments.of("Division",
@@ -1032,13 +1032,27 @@ final class ParserExpressionTests {
                                 new Token(Token.Type.OPERATOR, "(", 28),
                                 new Token(Token.Type.OPERATOR, ")", 29)
                         ),
+
                         new Ast.Expression.Function(
-                                Optional.of(new Ast.Expression.Access(Optional.of(
-                                        new Ast.Expression.Function(Optional.of(
-                                                new Ast.Expression.Function(Optional.of(new Ast.Expression.Access(Optional.empty(), "obj")), "method", Arrays.asList())
-                                        ), "method", Arrays.asList())
-                                ), "method")), "method", Arrays.asList()
+                                Optional.of(  // Receiver is another function call
+                                        new Ast.Expression.Function(
+                                                Optional.of(  // Receiver is another function call
+                                                        new Ast.Expression.Function(
+                                                                Optional.of(
+                                                                        new Ast.Expression.Access(Optional.empty(), "obj")  // The access to `obj`
+                                                                ),
+                                                                "method",  // First method call: obj.method()
+                                                                Arrays.asList()  // No arguments
+                                                        )
+                                                ),
+                                                "method",  // Second method call: obj.method().method()
+                                                Arrays.asList()  // No arguments
+                                        )
+                                ),
+                                "method",  // Third method call: obj.method().method().method()
+                                Arrays.asList()  // No arguments
                         )
+
                 ),
 
                 // Test for Complex Argument: name(expr1/expr2)
