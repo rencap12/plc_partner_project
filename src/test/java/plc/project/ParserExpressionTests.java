@@ -877,81 +877,6 @@ final class ParserExpressionTests {
                                 "z")
                 ),
 
-                // Test for Method Call: obj.method()
-                Arguments.of("Method Call",
-                        Arrays.asList(
-                                new Token(Token.Type.IDENTIFIER, "obj", 0),
-                                new Token(Token.Type.OPERATOR, ".", 3),
-                                new Token(Token.Type.IDENTIFIER, "method", 4),
-                                new Token(Token.Type.OPERATOR, "(", 10),
-                                new Token(Token.Type.OPERATOR, ")", 11)
-                        ),
-                        new Ast.Expression.Function(Optional.of(new Ast.Expression.Access(Optional.empty(), "obj")), "method", Arrays.asList())
-                ),
-
-                // Test for Method One Argument: obj.method(x)
-                Arguments.of("Method Call with One Argument",
-                        Arrays.asList(
-                                new Token(Token.Type.IDENTIFIER, "obj", 0),
-                                new Token(Token.Type.OPERATOR, ".", 3),
-                                new Token(Token.Type.IDENTIFIER, "method", 4),
-                                new Token(Token.Type.OPERATOR, "(", 10),
-                                new Token(Token.Type.IDENTIFIER, "x", 11),
-                                new Token(Token.Type.OPERATOR, ")", 12)
-                        ),
-                        new Ast.Expression.Function(Optional.of(new Ast.Expression.Access(Optional.empty(), "obj")), "method",
-                                Arrays.asList(new Ast.Expression.Access(Optional.empty(), "x"))
-                        )
-                ),
-
-                // Test for Method Multiple Arguments: obj.method(expr1, expr2, expr3)
-                Arguments.of("Method Call with Multiple Arguments",
-                        Arrays.asList(
-                                new Token(Token.Type.IDENTIFIER, "obj", 0),
-                                new Token(Token.Type.OPERATOR, ".", 3),
-                                new Token(Token.Type.IDENTIFIER, "method", 4),
-                                new Token(Token.Type.OPERATOR, "(", 10),
-                                new Token(Token.Type.IDENTIFIER, "expr1", 11),
-                                new Token(Token.Type.OPERATOR, ",", 16),
-                                new Token(Token.Type.IDENTIFIER, "expr2", 18),
-                                new Token(Token.Type.OPERATOR, ",", 23),
-                                new Token(Token.Type.IDENTIFIER, "expr3", 25),
-                                new Token(Token.Type.OPERATOR, ")", 30)
-                        ),
-                        new Ast.Expression.Function(Optional.of(new Ast.Expression.Access(Optional.empty(), "obj")), "method",
-                                Arrays.asList(
-                                        new Ast.Expression.Access(Optional.empty(), "expr1"),
-                                        new Ast.Expression.Access(Optional.empty(), "expr2"),
-                                        new Ast.Expression.Access(Optional.empty(), "expr3")
-                                )
-                        )
-                ),
-
-                // Test for Nested Method Access: obj.method().method().method()
-                Arguments.of("Nested Method Access",
-                        Arrays.asList(
-                                new Token(Token.Type.IDENTIFIER, "obj", 0),
-                                new Token(Token.Type.OPERATOR, ".", 3),
-                                new Token(Token.Type.IDENTIFIER, "method", 4),
-                                new Token(Token.Type.OPERATOR, "(", 10),
-                                new Token(Token.Type.OPERATOR, ")", 11),
-                                new Token(Token.Type.OPERATOR, ".", 12),
-                                new Token(Token.Type.IDENTIFIER, "method", 13),
-                                new Token(Token.Type.OPERATOR, "(", 19),
-                                new Token(Token.Type.OPERATOR, ")", 20),
-                                new Token(Token.Type.OPERATOR, ".", 21),
-                                new Token(Token.Type.IDENTIFIER, "method", 22),
-                                new Token(Token.Type.OPERATOR, "(", 28),
-                                new Token(Token.Type.OPERATOR, ")", 29)
-                        ),
-                        new Ast.Expression.Function(
-                                Optional.of(new Ast.Expression.Access(Optional.of(
-                                        new Ast.Expression.Function(Optional.of(
-                                                new Ast.Expression.Function(Optional.of(new Ast.Expression.Access(Optional.empty(), "obj")), "method", Arrays.asList())
-                                        ), "method", Arrays.asList())
-                                ), "method")), "method", Arrays.asList()
-                        )
-                ),
 
                 // Test for Missing Primary Expression: .method()
                 Arguments.of("Missing Primary Expression",
@@ -1038,6 +963,82 @@ final class ParserExpressionTests {
                                 new Ast.Expression.Access(Optional.empty(), "expr2"),
                                 new Ast.Expression.Access(Optional.empty(), "expr3")
                         ))
+                ),
+
+                // Test for Method Call: obj.method()
+                Arguments.of("Method Call",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "obj", 0),
+                                new Token(Token.Type.OPERATOR, ".", 3),
+                                new Token(Token.Type.IDENTIFIER, "method", 4),
+                                new Token(Token.Type.OPERATOR, "(", 10),
+                                new Token(Token.Type.OPERATOR, ")", 11)
+                        ),
+                        new Ast.Expression.Function(Optional.of(new Ast.Expression.Access(Optional.empty(), "obj")), "method", Arrays.asList())
+                ),
+
+                // Test for Method One Argument: obj.method(x)
+                Arguments.of("Method Call with One Argument",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "obj", 0),
+                                new Token(Token.Type.OPERATOR, ".", 3),
+                                new Token(Token.Type.IDENTIFIER, "method", 4),
+                                new Token(Token.Type.OPERATOR, "(", 10),
+                                new Token(Token.Type.IDENTIFIER, "x", 11),
+                                new Token(Token.Type.OPERATOR, ")", 12)
+                        ),
+                        new Ast.Expression.Function(Optional.of(new Ast.Expression.Access(Optional.empty(), "obj")), "method",
+                                Arrays.asList(new Ast.Expression.Access(Optional.empty(), "x"))
+                        )
+                ),
+
+                // Test for Method Multiple Arguments: obj.method(expr1, expr2, expr3)
+                Arguments.of("Method Call with Multiple Arguments",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "obj", 0),
+                                new Token(Token.Type.OPERATOR, ".", 3),
+                                new Token(Token.Type.IDENTIFIER, "method", 4),
+                                new Token(Token.Type.OPERATOR, "(", 10),
+                                new Token(Token.Type.IDENTIFIER, "expr1", 11),
+                                new Token(Token.Type.OPERATOR, ",", 16),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 18),
+                                new Token(Token.Type.OPERATOR, ",", 23),
+                                new Token(Token.Type.IDENTIFIER, "expr3", 25),
+                                new Token(Token.Type.OPERATOR, ")", 30)
+                        ),
+                        new Ast.Expression.Function(Optional.of(new Ast.Expression.Access(Optional.empty(), "obj")), "method",
+                                Arrays.asList(
+                                        new Ast.Expression.Access(Optional.empty(), "expr1"),
+                                        new Ast.Expression.Access(Optional.empty(), "expr2"),
+                                        new Ast.Expression.Access(Optional.empty(), "expr3")
+                                )
+                        )
+                ),
+
+                // Test for Nested Method Access: obj.method().method().method()
+                Arguments.of("Nested Method Access",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "obj", 0),
+                                new Token(Token.Type.OPERATOR, ".", 3),
+                                new Token(Token.Type.IDENTIFIER, "method", 4),
+                                new Token(Token.Type.OPERATOR, "(", 10),
+                                new Token(Token.Type.OPERATOR, ")", 11),
+                                new Token(Token.Type.OPERATOR, ".", 12),
+                                new Token(Token.Type.IDENTIFIER, "method", 13),
+                                new Token(Token.Type.OPERATOR, "(", 19),
+                                new Token(Token.Type.OPERATOR, ")", 20),
+                                new Token(Token.Type.OPERATOR, ".", 21),
+                                new Token(Token.Type.IDENTIFIER, "method", 22),
+                                new Token(Token.Type.OPERATOR, "(", 28),
+                                new Token(Token.Type.OPERATOR, ")", 29)
+                        ),
+                        new Ast.Expression.Function(
+                                Optional.of(new Ast.Expression.Access(Optional.of(
+                                        new Ast.Expression.Function(Optional.of(
+                                                new Ast.Expression.Function(Optional.of(new Ast.Expression.Access(Optional.empty(), "obj")), "method", Arrays.asList())
+                                        ), "method", Arrays.asList())
+                                ), "method")), "method", Arrays.asList()
+                        )
                 ),
 
                 // Test for Complex Argument: name(expr1/expr2)
