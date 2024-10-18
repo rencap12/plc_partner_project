@@ -889,6 +889,8 @@ final class ParserExpressionTests {
                         null // Expecting a ParseException for missing primary expression
                 ),
 
+
+
                 // Bonus Test: Alternating Fields/Methods: obj1.method1().obj2.method2().obj3
                 Arguments.of("Alternating Fields/Methods",
                         Arrays.asList(
