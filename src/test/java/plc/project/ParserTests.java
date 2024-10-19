@@ -128,6 +128,20 @@ final class ParserTests {
                                 new Token(Token.Type.OPERATOR, ";", 6)
                         ),
                         new Ast.Statement.Expression(new Ast.Expression.Function(Optional.empty(), "name", Arrays.asList()))
+                ), Arguments.of("Variable Expression",
+                        Arrays.asList(
+                                // expr;
+                                new Token(Token.Type.IDENTIFIER, "expr", 0),
+                                new Token(Token.Type.OPERATOR, ";", 4)
+                        ),
+                        new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "expr"))
+                ),
+                Arguments.of("Missing Semicolon",
+                        Arrays.asList(
+                                // f
+                                new Token(Token.Type.IDENTIFIER, "f", 0)
+                        ),
+                        null // throws err
                 )
         );
     }
