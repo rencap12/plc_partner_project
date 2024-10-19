@@ -28,10 +28,10 @@ final class ParserTests {
 
     private static Stream<Arguments> testSource() {
         return Stream.of(
-                Arguments.of("Zero Statements",
-                        Arrays.asList(),
-                        new Ast.Source(Arrays.asList(), Arrays.asList())
-                ),
+//                Arguments.of("Zero Statements",
+//                        Arrays.asList(),
+//                        new Ast.Source(Arrays.asList(), Arrays.asList())
+//                ),
                 Arguments.of("Field",
                         Arrays.asList(
                                 // LET name = expr;

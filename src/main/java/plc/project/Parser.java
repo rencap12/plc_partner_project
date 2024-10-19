@@ -33,15 +33,36 @@ public final class Parser {
         List<Ast.Field> fields = new ArrayList<>();
         List<Ast.Method> methods = new ArrayList<>();
 
-        // Parse fields and methods, assuming they are interleaved.
-        while (peek("LET", "VAR", "FUN")) {
-            if (match("LET", "VAR")) {
-                fields.add(parseField());
-            } else if (match("FUN")) {
-                methods.add(parseMethod());
+        if (tokens.has(0) && peek(Token.Type.IDENTIFIER)) {
+            while (peek(Token.Type.IDENTIFIER)) {
+
+                // might be a field
+                if (peek("LET")) {
+                    while (peek("LET")) {
+                        fields.add(parseField());
+                        if (tokens.has(0) && (!peek("LET") && !peek("DEF"))) {
+                            throw new ParseException("not let or def" + " INDEX:",
+                                    tokens.index);
+                        }
+                    }
+                }
+                if (peek("DEF")) {
+                    while (peek("DEF")) {
+                        methods.add(parseMethod());
+                        if (tokens.has(0) && !peek("DEF")) {
+                            throw new ParseException("not def" + " INDEX:",
+                                    tokens.index);
+                        }
+                    }
+                }
             }
         }
-        return new Ast.Source(fields, methods);
+        if (!tokens.has(0)) {
+            return new Ast.Source(fields, methods);
+        }
+        else {
+            throw new ParseException("not source keyword", tokens.index);
+        }
     }
 
     /**
@@ -49,27 +70,42 @@ public final class Parser {
      * next tokens start a field, aka {@code LET}.
      */
     public Ast.Field parseField() throws ParseException {
-        boolean isConstant = match("LET");
-        if (!isConstant && !match("VAR")) {
-            throw new ParseException("Expected 'LET' or 'VAR'", tokens.index);
+        boolean isConstant = peek("CONST");
+        match("LET");
+        String name = "";
+
+        // Get identifier
+        if (peek(Token.Type.IDENTIFIER)) {
+            name = tokens.get(0).getLiteral();
+            match(Token.Type.IDENTIFIER);
+        } else {
+            if (tokens.has(0)) {
+                throw new ParseException("no identifier",
+                        tokens.index);
+            }
         }
 
-        if (!peek(Token.Type.IDENTIFIER)) {
-            throw new ParseException("Expected identifier", tokens.index);
+        if (peek("=")) {
+            match("="); // after this get the value for the field
+            Ast.Expression value = parseExpression();
+            if (peek(";")) {
+                match(";");
+                return new Ast.Field(name, isConstant, Optional.of(value));
+            } else {
+                if (tokens.has(0))
+                    throw new ParseException("no ;" , tokens.index);
+            }
+        } else {
+            if (peek(";")) {
+                match(";");
+                return new Ast.Field(name, isConstant, Optional.empty());
+            } else {
+                if (tokens.has(0))
+                    throw new ParseException("no ;" , tokens.index);
+            }
         }
-        String name = tokens.get(0).getLiteral();
-        tokens.advance();
 
-        Optional<Ast.Expression> value = Optional.empty();
-        if (match("=")) {
-            value = Optional.of(parseExpression());
-        }
-
-        if (!match(";")) {
-            throw new ParseException("Expected ';'", tokens.index);
-        }
-
-        return new Ast.Field(name, isConstant, value);
+        throw new ParseException("NOT FIELD", tokens.index);
     }
 
     /**
@@ -77,49 +113,78 @@ public final class Parser {
      * next tokens start a method, aka {@code DEF}.
      */
     public Ast.Method parseMethod() throws ParseException {
-        if (!match("FUN")) {
-            throw new ParseException("Expected 'FUN'", tokens.index);
+        match("DEF");
+        String name = "";
+
+        // Get identifier
+        if (peek(Token.Type.IDENTIFIER)) {
+            name = tokens.get(0).getLiteral();
+            match(Token.Type.IDENTIFIER);
+        } else {
+            if (tokens.has(0))
+                throw new ParseException("no identifier" ,
+                        tokens.index);
         }
 
-        if (!peek(Token.Type.IDENTIFIER)) {
-            throw new ParseException("Expected method name", tokens.index);
-        }
-        String name = tokens.get(0).getLiteral();
-        tokens.advance();
-
-        if (!match("(")) {
-            throw new ParseException("Expected '(' after method name", tokens.index);
+        // Check (
+        if (peek("("))
+            match("(");
+        else {
+            if (tokens.has(0))
+                throw new ParseException("no (" , tokens.index);
         }
 
         List<String> parameters = new ArrayList<>();
-        if (!peek(")")) {
-            do {
-                if (!peek(Token.Type.IDENTIFIER)) {
-                    throw new ParseException("Expected parameter name", tokens.index);
+
+        while (peek(Token.Type.IDENTIFIER)) {
+            // Need to catch NON-IDENTIFIERS in here
+            parameters.add(tokens.get(0).getLiteral());
+            match(Token.Type.IDENTIFIER);
+
+            if (peek(",")) {
+                match(",");
+                if (peek(")"))
+                    throw new ParseException("trailing comma" ,
+                            tokens.index);
+            } else {
+                if (!peek(")")) {
+                    if (tokens.has(0))
+                        throw new ParseException("no , before )" ,
+                                tokens.index);
                 }
-                parameters.add(tokens.get(0).getLiteral());
-                tokens.advance();
-            } while (match(","));
+            }
         }
 
-        if (!match(")")) {
-            throw new ParseException("Expected ')'", tokens.index);
+        // Check )
+        if (peek(")"))
+            match(")");
+        else {
+            if (tokens.has(0))
+                throw new ParseException("no )" , tokens.index);
         }
 
-        if (!match("{")) {
-            throw new ParseException("Expected '{' at start of method body", tokens.index);
+        if (peek("DO"))
+            match("DO");
+        else {
+            if (tokens.has(0))
+                throw new ParseException("no DO" , tokens.index);
         }
 
         List<Ast.Statement> statements = new ArrayList<>();
-        while (!peek("}")) {
+
+        while (!peek("END")) {
             statements.add(parseStatement());
         }
 
-        if (!match("}")) {
-            throw new ParseException("Expected '}' at end of method body", tokens.index);
+        if (peek("END")) {
+            match("END");
+                return new Ast.Method(name, parameters, statements);
+        } else {
+            if (tokens.has(0))
+                throw new ParseException("no END" , tokens.index);
         }
 
-        return new Ast.Method(name, parameters, statements);
+        throw new ParseException("NO METHOD PARSED", tokens.index);
     }
 
     /**
