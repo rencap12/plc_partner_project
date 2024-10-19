@@ -173,6 +173,19 @@ final class ParserTests {
                                 new Token(Token.Type.OPERATOR, ";", 15)
                         ),
                         new Ast.Statement.Declaration("name", Optional.of(new Ast.Expression.Access(Optional.empty(), "expr")))
+                ),
+                Arguments.of("Type Annotation",
+                        Arrays.asList(
+                                // LET name: Type = expr;
+                                new Token(Token.Type.IDENTIFIER, "LET", 0),
+                                new Token(Token.Type.IDENTIFIER, "name", 4),
+                                new Token(Token.Type.OPERATOR, ":", 8),
+                                new Token(Token.Type.IDENTIFIER, "Type", 9),
+                                new Token(Token.Type.OPERATOR, "=", 13),
+                                new Token(Token.Type.IDENTIFIER, "expr", 15),
+                                new Token(Token.Type.OPERATOR, ";", 19)
+                        ),
+                        new Ast.Statement.Declaration("name", Optional.of(new Ast.Expression.Access(Optional.empty(), "expr")))
                 )
         );
     }

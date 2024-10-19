@@ -41,7 +41,7 @@ public final class Parser {
                     while (peek("LET")) {
                         fields.add(parseField());
                         if (tokens.has(0) && (!peek("LET") && !peek("DEF"))) {
-                            throw new ParseException("not let or def" + " INDEX:",
+                            throw new ParseException("not let or def",
                                     tokens.index);
                         }
                     }
@@ -50,7 +50,7 @@ public final class Parser {
                     while (peek("DEF")) {
                         methods.add(parseMethod());
                         if (tokens.has(0) && !peek("DEF")) {
-                            throw new ParseException("not def" + " INDEX:",
+                            throw new ParseException("not def",
                                     tokens.index);
                         }
                     }
@@ -73,6 +73,7 @@ public final class Parser {
         boolean isConstant = peek("CONST");
         match("LET");
         String name = "";
+        String typeName = "";
 
         // Get identifier
         if (peek(Token.Type.IDENTIFIER)) {
@@ -85,9 +86,11 @@ public final class Parser {
             }
         }
 
+        Ast.Expression value;
+
         if (peek("=")) {
             match("="); // after this get the value for the field
-            Ast.Expression value = parseExpression();
+            value = parseExpression();
             if (peek(";")) {
                 match(";");
                 return new Ast.Field(name, isConstant, Optional.of(value));
@@ -233,6 +236,17 @@ public final class Parser {
         String name = tokens.get(0).getLiteral();
         tokens.advance();
 
+        String typeName = "";
+
+        if (peek(":")) {
+            match(":");
+
+            // Type
+            if (peek(Token.Type.IDENTIFIER)) {
+                match(Token.Type.IDENTIFIER);
+            }
+        }
+
         Optional<Ast.Expression> value = Optional.empty();
         if (match("=")) {
             value = Optional.of(parseExpression());
@@ -304,9 +318,6 @@ public final class Parser {
 
         Ast.Statement increment = parseStatement();
 
-//        if (!match("{")) {
-//            throw new ParseException("Expected '{' after 'FOR' condition", tokens.index);
-//        }
 
         List<Ast.Statement> statements = new ArrayList<>();
         while (!match("}")) {
@@ -329,19 +340,11 @@ public final class Parser {
         match("WHILE"); // while key word found, move forward
         Ast.Expression condition = parseExpression();
 
-//        if (!match("{")) {
-//            throw new ParseException("Expected '{' after 'WHILE' condition", tokens.index);
-//        }
 
         if (peek("DO")){
             match("DO");
         }
         // make logic to catch statements if no DO present
-
-
-//        while (!match("}")) {
-//            statements.add(parseStatement());
-//        }
 
         List<Ast.Statement> statements = new ArrayList<>();
 
@@ -598,6 +601,7 @@ public final class Parser {
                 Boolean temp = false;
                 return new Ast.Expression.Literal(temp);
             }
+
 
 
             // Check if it's a function call
