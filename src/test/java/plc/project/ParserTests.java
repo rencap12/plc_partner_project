@@ -210,6 +210,15 @@ final class ParserTests {
                                 new Ast.Expression.Access(Optional.empty(), "name"),
                                 new Ast.Expression.Access(Optional.empty(), "value")
                         )
+                ),
+                Arguments.of("Missing Value",
+                        Arrays.asList(
+                                // name = ;
+                                new Token(Token.Type.IDENTIFIER, "name", 0),
+                                new Token(Token.Type.OPERATOR, "=", 5),
+                                new Token(Token.Type.OPERATOR, ";", 6)
+                        ),
+                       null // throws an error
                 )
         );
     }
@@ -239,6 +248,17 @@ final class ParserTests {
                                 Arrays.asList()
                         )
                 ),
+                Arguments.of("Missing DO",
+                        Arrays.asList(
+                                // IF expr stmt; END
+                                new Token(Token.Type.IDENTIFIER, "IF", 0),
+                                new Token(Token.Type.IDENTIFIER, "expr", 3),
+                                new Token(Token.Type.IDENTIFIER, "stmt", 8),
+                                new Token(Token.Type.OPERATOR, ";", 12),
+                                new Token(Token.Type.IDENTIFIER, "END", 14)
+                        ),
+                       null // throws an error
+                ),
                 Arguments.of("Else",
                         Arrays.asList(
                                 // IF expr DO stmt1; ELSE stmt2; END
@@ -257,6 +277,81 @@ final class ParserTests {
                                 Arrays.asList(new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt1"))),
                                 Arrays.asList(new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt2")))
                         )
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("testForStatement")
+    void testForStatement(String test, List<Token> tokens, Ast.Statement.For expected) {
+        test(tokens, expected, Parser::parseStatement);
+    }
+
+    private static Stream<Arguments> testForStatement() {
+        return Stream.of(
+                Arguments.of("Basic For Loop",
+                        Arrays.asList(
+                                // FOR (id = expr1; expr2; id = expr3) stmt1; END
+                                new Token(Token.Type.IDENTIFIER, "FOR", 0),
+                                new Token(Token.Type.OPERATOR, "(", 4),
+                                new Token(Token.Type.IDENTIFIER, "id", 5),
+                                new Token(Token.Type.OPERATOR, "=", 7),
+                                new Token(Token.Type.IDENTIFIER, "expr1", 9),
+                                new Token(Token.Type.OPERATOR, ";", 15),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 17),
+                                new Token(Token.Type.OPERATOR, ";", 23),
+                                new Token(Token.Type.IDENTIFIER, "id", 25),
+                                new Token(Token.Type.OPERATOR, "=", 27),
+                                new Token(Token.Type.IDENTIFIER, "expr3", 29),
+                                new Token(Token.Type.OPERATOR, ")", 35),
+                                new Token(Token.Type.IDENTIFIER, "stmt1", 37),
+                                new Token(Token.Type.OPERATOR, ";", 42),
+                                new Token(Token.Type.IDENTIFIER, "END", 44)
+                        ),
+                        new Ast.Statement.For(
+                                new Ast.Statement.Assignment(
+                                        new Ast.Expression.Access(Optional.empty(), "id"),
+                                        new Ast.Expression.Access(Optional.empty(), "expr1")
+                                ),
+                                new Ast.Expression.Access(Optional.empty(), "expr2"),
+                                new Ast.Statement.Assignment(
+                                        new Ast.Expression.Access(Optional.empty(), "id"),
+                                        new Ast.Expression.Access(Optional.empty(), "expr3")
+                                ),
+                                Arrays.asList(new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt1"))) // Body statements
+                        )
+                ),
+                Arguments.of("Missing END",
+                        Arrays.asList(
+                                // FOR (id = expr1; expr2; id = expr3) stmt1;
+                                new Token(Token.Type.IDENTIFIER, "FOR", 0),
+                                new Token(Token.Type.OPERATOR, "(", 4),
+                                new Token(Token.Type.IDENTIFIER, "id", 5),
+                                new Token(Token.Type.OPERATOR, "=", 7),
+                                new Token(Token.Type.IDENTIFIER, "expr1", 9),
+                                new Token(Token.Type.OPERATOR, ";", 15),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 17),
+                                new Token(Token.Type.OPERATOR, ";", 23),
+                                new Token(Token.Type.IDENTIFIER, "id", 25),
+                                new Token(Token.Type.OPERATOR, "=", 27),
+                                new Token(Token.Type.IDENTIFIER, "expr3", 29),
+                                new Token(Token.Type.OPERATOR, ")", 35),
+                                new Token(Token.Type.IDENTIFIER, "stmt1", 37),
+                                new Token(Token.Type.OPERATOR, ";", 42)
+                        ),
+                        null
+//                        new Ast.Statement.For(
+//                                new Ast.Statement.Assignment(
+//                                        new Ast.Expression.Access(Optional.empty(), "id"),
+//                                        new Ast.Expression.Access(Optional.empty(), "expr1")
+//                                ),
+//                                new Ast.Expression.Access(Optional.empty(), "expr2"),
+//                                new Ast.Statement.Assignment(
+//                                        new Ast.Expression.Access(Optional.empty(), "id"),
+//                                        new Ast.Expression.Access(Optional.empty(), "expr3")
+//                                ),
+//                                Arrays.asList(new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt1"))) // Body statements
+//                        )
                 )
         );
     }

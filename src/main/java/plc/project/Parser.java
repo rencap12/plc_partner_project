@@ -311,20 +311,42 @@ public final class Parser {
         if (!match("FOR")) {
             throw new ParseException("Expected 'FOR'", tokens.index);
         }
+        match("FOR");
+
+        if (peek("(")){
+            match("(");
+        } else {
+            throw new ParseException("missing ( in for", tokens.index);
+        }
 
         Ast.Statement initialization = parseStatement();
 
         Ast.Expression condition = parseExpression();
+        if (peek(";")){
+            match(";");
+        }
 
         Ast.Statement increment = parseStatement();
 
+//        if (peek(")")){
+//            match(")");
+//        } else {
+//            throw new ParseException("missing ) in for", tokens.index);
+//        }
 
         List<Ast.Statement> statements = new ArrayList<>();
-        while (!match("}")) {
+        while (!match("END")) {
             statements.add(parseStatement());
         }
 
+//        if (peek("END")){
+//            match("END");
+//        } else{
+//            throw new ParseException("MISSING END in for", tokens.index);
+//        }
         return new Ast.Statement.For(initialization, condition, increment, statements);
+
+
     }
 
     /**
@@ -386,14 +408,17 @@ public final class Parser {
 
         if (match("=")) {
             Ast.Expression value = parseExpression();
-            if (!match(";")) {
+            if (!match(";") && !peek(")")) {
                 throw new ParseException("Expected ';' after assignment", tokens.index);
+            } else if (match(")")){ // FOR (id = expr1; expr2; id = expr3) stmt1; END
+                return new Ast.Statement.Assignment(receiver, value);
             }
             return new Ast.Statement.Assignment(receiver, value);
         } else if (peek(";")) {
             match(";");
             return new Ast.Statement.Expression(receiver);
-        } else {
+        }
+        else {
             throw new ParseException("Expected '=' or ';'", tokens.index);
         }
     }
@@ -618,7 +643,7 @@ public final class Parser {
             if (!peek(")")) {
                 if (!peek("+") && !peek("-") && !peek("*") && !peek("/") && !peek("&&") && !peek("||") && !peek("<") && !peek("<=") && !peek(">") && !peek(">=") && !peek("==") && !peek("!=")) {
                     match(")");
-                    throw new ParseException("Expected closing parenthesis ')'", tokens.index);
+                    throw new ParseException("Expected closing parentheses ')'", tokens.index);
                 }
             }
             return new Ast.Expression.Group(expression);
