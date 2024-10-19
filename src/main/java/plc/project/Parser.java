@@ -92,16 +92,18 @@ public final class Parser {
                 match(";");
                 return new Ast.Field(name, isConstant, Optional.of(value));
             } else {
-                if (tokens.has(0))
-                    throw new ParseException("no ;" , tokens.index);
+                if (tokens.has(0)) {
+                    throw new ParseException("no ;", tokens.index);
+                }
             }
         } else {
             if (peek(";")) {
                 match(";");
                 return new Ast.Field(name, isConstant, Optional.empty());
             } else {
-                if (tokens.has(0))
-                    throw new ParseException("no ;" , tokens.index);
+                if (tokens.has(0)) {
+                    throw new ParseException("no ;", tokens.index);
+                }
             }
         }
 
@@ -121,17 +123,19 @@ public final class Parser {
             name = tokens.get(0).getLiteral();
             match(Token.Type.IDENTIFIER);
         } else {
-            if (tokens.has(0))
-                throw new ParseException("no identifier" ,
+            if (tokens.has(0)) {
+                throw new ParseException("no identifier",
                         tokens.index);
+            }
         }
 
         // Check (
         if (peek("("))
             match("(");
         else {
-            if (tokens.has(0))
-                throw new ParseException("no (" , tokens.index);
+            if (tokens.has(0)) {
+                throw new ParseException("no (", tokens.index);
+            }
         }
 
         List<String> parameters = new ArrayList<>();
@@ -143,31 +147,35 @@ public final class Parser {
 
             if (peek(",")) {
                 match(",");
-                if (peek(")"))
-                    throw new ParseException("trailing comma" ,
+                if (peek(")")) {
+                    throw new ParseException("trailing comma",
                             tokens.index);
+                }
             } else {
                 if (!peek(")")) {
-                    if (tokens.has(0))
-                        throw new ParseException("no , before )" ,
+                    if (tokens.has(0)) {
+                        throw new ParseException("no , before )",
                                 tokens.index);
+                    }
                 }
             }
         }
 
         // Check )
-        if (peek(")"))
+        if (peek(")")) {
             match(")");
-        else {
-            if (tokens.has(0))
-                throw new ParseException("no )" , tokens.index);
+        } else {
+            if (tokens.has(0)) {
+                throw new ParseException("no )", tokens.index);
+            }
         }
 
-        if (peek("DO"))
+        if (peek("DO")) {
             match("DO");
-        else {
-            if (tokens.has(0))
-                throw new ParseException("no DO" , tokens.index);
+        } else {
+            if (tokens.has(0)) {
+                throw new ParseException("no DO", tokens.index);
+            }
         }
 
         List<Ast.Statement> statements = new ArrayList<>();
@@ -180,8 +188,9 @@ public final class Parser {
             match("END");
                 return new Ast.Method(name, parameters, statements);
         } else {
-            if (tokens.has(0))
-                throw new ParseException("no END" , tokens.index);
+            if (tokens.has(0)) {
+                throw new ParseException("no END", tokens.index);
+            }
         }
 
         throw new ParseException("NO METHOD PARSED", tokens.index);
