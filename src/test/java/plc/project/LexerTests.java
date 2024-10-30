@@ -353,6 +353,7 @@ public class LexerTests {
 
 
 
+
     @Test
     void testException() {
         ParseException exception = Assertions.assertThrows(ParseException.class,
@@ -379,6 +380,7 @@ public class LexerTests {
             Assertions.assertFalse(success, e.getMessage());
         }
     }
+
 
     /**
      * Tests that lexing the input through {@link Lexer#lex()} matches the

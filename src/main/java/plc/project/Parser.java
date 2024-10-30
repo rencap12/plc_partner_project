@@ -77,6 +77,10 @@ public final class Parser {
 
         // Get identifier
         if (peek(Token.Type.IDENTIFIER)) {
+             if (peek("CONST")){
+                 match("CONST");
+                 isConstant = true;
+             }
             name = tokens.get(0).getLiteral();
             match(Token.Type.IDENTIFIER);
         } else {

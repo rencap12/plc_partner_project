@@ -287,12 +287,16 @@ public abstract class Ast {
                 this.statements = statements;
             }
 
-            public Statement getName() {
+            public Statement getInitialization() {
                 return initialization;
             }
 
-            public Ast.Expression getValue() {
+            public Ast.Expression getCondition() {
                 return condition;
+            }
+
+            public Statement getIncrement() {
+                return increment;
             }
 
             public List<Statement> getStatements() {
@@ -560,6 +564,76 @@ public abstract class Ast {
             }
 
         }
+
+    }
+
+    public interface Visitor<T> {
+
+        default T visit(Ast ast) {
+            if (ast instanceof Source) {
+                return visit((Source) ast);
+            } else if (ast instanceof Field) {
+                return visit((Field) ast);
+            } else if (ast instanceof Method) {
+                return visit((Method) ast);
+            } else if (ast instanceof Statement.Expression) {
+                return visit((Statement.Expression) ast);
+            } else if (ast instanceof Statement.Declaration) {
+                return visit((Statement.Declaration) ast);
+            } else if (ast instanceof Statement.Assignment) {
+                return visit((Statement.Assignment) ast);
+            } else if (ast instanceof Statement.If) {
+                return visit((Statement.If) ast);
+            } else if (ast instanceof Statement.For) {
+                return visit((Statement.For) ast);
+            } else if (ast instanceof Statement.While) {
+                return visit((Statement.While) ast);
+            } else if (ast instanceof Statement.Return) {
+                return visit((Statement.Return) ast);
+            } else if (ast instanceof Expression.Literal) {
+                return visit((Expression.Literal) ast);
+            } else if (ast instanceof Expression.Group) {
+                return visit((Expression.Group) ast);
+            } else if (ast instanceof Expression.Binary) {
+                return visit((Expression.Binary) ast);
+            } else if (ast instanceof Expression.Access) {
+                return visit((Expression.Access) ast);
+            } else if (ast instanceof Expression.Function) {
+                return visit((Expression.Function) ast);
+            } else {
+                throw new AssertionError("Unimplemented AST type: " + ast.getClass().getName() + ".");
+            }
+        }
+
+        T visit(Source ast);
+
+        T visit(Field ast);
+
+        T visit(Method ast);
+
+        T visit(Statement.Expression ast);
+
+        T visit(Statement.Declaration ast);
+
+        T visit(Statement.Assignment ast);
+
+        T visit(Statement.If ast);
+
+        T visit(Statement.For ast);
+
+        T visit(Statement.While ast);
+
+        T visit(Statement.Return ast);
+
+        T visit(Expression.Literal ast);
+
+        T visit(Expression.Group ast);
+
+        T visit(Expression.Binary ast);
+
+        T visit(Expression.Access ast);
+
+        T visit(Expression.Function ast);
 
     }
 
