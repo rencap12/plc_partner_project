@@ -111,20 +111,30 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     @Override
     public Environment.PlcObject visit(Ast.Statement.For ast) {
         Scope forScope = new Scope(scope);
-        scope = forScope;
+        scope = forScope; // Set the current scope to the new forScope
+
         try {
+            // Execute the initialization statement
             visit(ast.getInitialization());
+
+            // Loop while the condition is true
             while (requireType(Boolean.class, visit(ast.getCondition()))) {
+                // Execute the statements in the loop body
                 for (Ast.Statement statement : ast.getStatements()) {
                     visit(statement);
                 }
-                // If there's a way to specify the update outside of `getUpdate()`, handle it here.
+
+                // Execute the increment statement if it exists
+                if (ast.getIncrement() != null) {
+                    visit(ast.getIncrement());
+                }
             }
         } finally {
-            scope = forScope.getParent();
+            scope = forScope.getParent(); // Restore the previous scope
         }
         return Environment.NIL;
     }
+
 
 
     @Override
