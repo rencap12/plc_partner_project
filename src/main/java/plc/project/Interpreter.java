@@ -170,6 +170,9 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     @Override
     public Environment.PlcObject visit(Ast.Expression.Binary ast) {
         Environment.PlcObject leftObject = visit(ast.getLeft());
+        if (ast.getOperator() == "||")
+            if (leftObject.getValue().equals(true))
+                return Environment.create(requireType(Boolean.class, leftObject));
         Environment.PlcObject rightObject = visit(ast.getRight());
 
         switch (ast.getOperator()) {
@@ -207,13 +210,34 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 }
                 break;
             case "/":
+                // Check for BigInteger types
                 if (leftObject.getValue() instanceof java.math.BigInteger && rightObject.getValue() instanceof java.math.BigInteger) {
                     if (((java.math.BigInteger) rightObject.getValue()).equals(java.math.BigInteger.ZERO)) {
                         throw new RuntimeException("Division by zero.");
                     }
                     return Environment.create(((java.math.BigInteger) leftObject.getValue()).divide((java.math.BigInteger) rightObject.getValue()));
                 }
+
+                // Check for BigDecimal types (or strings that can be converted to BigDecimal)
+                if (leftObject.getValue() instanceof String) {
+                    leftObject = Environment.create(new java.math.BigDecimal((String) leftObject.getValue()));
+                }
+                if (rightObject.getValue() instanceof String) {
+                    rightObject = Environment.create(new java.math.BigDecimal((String) rightObject.getValue()));
+                }
+
+                if (leftObject.getValue() instanceof java.math.BigDecimal && rightObject.getValue() instanceof java.math.BigDecimal) {
+                    if (((java.math.BigDecimal) rightObject.getValue()).compareTo(java.math.BigDecimal.ZERO) == 0) {
+                        throw new RuntimeException("Division by zero.");
+                    }
+                    // Use the divide method with a scale and rounding mode, rounding to one decimal place
+                    return Environment.create(((java.math.BigDecimal) leftObject.getValue())
+                            .divide((java.math.BigDecimal) rightObject.getValue(),
+                                    1, // Scale: number of digits to the right of the decimal point
+                                    java.math.RoundingMode.HALF_UP)); // Rounding mode to round to nearest
+                }
                 break;
+
         }
         throw new RuntimeException("Invalid binary operation for operator: " + ast.getOperator());
     }
