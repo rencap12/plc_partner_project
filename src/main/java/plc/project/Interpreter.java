@@ -154,8 +154,13 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Literal ast) {
-        return Environment.create(ast.getLiteral());
+        // Check if the literal value is null
+        if (ast.getLiteral() == null) {
+            return Environment.NIL; // Return Environment.NIL for null literals
+        }
+        return Environment.create(ast.getLiteral()); // Return the literal value wrapped in PlcObject otherwise
     }
+
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Group ast) {
