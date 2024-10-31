@@ -18,77 +18,217 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Source ast) {
-        throw new UnsupportedOperationException(); //TODO
+        for (Ast.Field field : ast.getFields()) {
+            visit(field);
+        }
+        for (Ast.Method method : ast.getMethods()) {
+            visit(method);
+        }
+        return scope.lookupFunction("main", 0).invoke(new java.util.ArrayList<>());
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Field ast) {
-        throw new UnsupportedOperationException(); //TODO
+        Environment.PlcObject value = ast.getValue().isPresent() ? visit(ast.getValue().get()) : Environment.NIL;
+        scope.defineVariable(ast.getName(), true, value); // Assuming fields are mutable by default; adjust if needed
+        return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Method ast) {
-        throw new UnsupportedOperationException(); //TODO
+        scope.defineFunction(ast.getName(), ast.getParameters().size(), args -> {
+            Scope functionScope = new Scope(scope);
+            for (int i = 0; i < ast.getParameters().size(); i++) {
+                functionScope.defineVariable(ast.getParameters().get(i), true, args.get(i));
+            }
+            Scope previousScope = scope;
+            scope = functionScope;
+            try {
+                for (Ast.Statement statement : ast.getStatements()) {
+                    visit(statement);
+                }
+            } catch (Return returnException) {
+                return returnException.value;
+            } finally {
+                scope = previousScope;
+            }
+            return Environment.NIL;
+        });
+        return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Expression ast) {
-        throw new UnsupportedOperationException(); //TODO
+        visit(ast.getExpression());
+        return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Declaration ast) {
-        throw new UnsupportedOperationException(); //TODO
+        Environment.PlcObject value = ast.getValue().isPresent() ? visit(ast.getValue().get()) : Environment.NIL;
+        scope.defineVariable(ast.getName(), true, value);
+        return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Assignment ast) {
-        throw new UnsupportedOperationException(); //TODO
+        if (!(ast.getReceiver() instanceof Ast.Expression.Access)) {
+            throw new RuntimeException("Assignment target must be an access expression.");
+        }
+        Ast.Expression.Access receiver = (Ast.Expression.Access) ast.getReceiver();
+        Environment.PlcObject value = visit(ast.getValue());
+
+        if (receiver.getReceiver().isPresent()) {
+            Environment.PlcObject object = visit(receiver.getReceiver().get());
+            object.setField(receiver.getName(), value);
+        } else {
+            scope.lookupVariable(receiver.getName()).setValue(value);
+        }
+        return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.If ast) {
-        throw new UnsupportedOperationException(); //TODO
+        Boolean condition = requireType(Boolean.class, visit(ast.getCondition()));
+        Scope ifScope = new Scope(scope);
+        scope = ifScope;
+        try {
+            if (condition) {
+                for (Ast.Statement statement : ast.getThenStatements()) {
+                    visit(statement);
+                }
+            } else {
+                for (Ast.Statement statement : ast.getElseStatements()) {
+                    visit(statement);
+                }
+            }
+        } finally {
+            scope = ifScope.getParent();
+        }
+        return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.For ast) {
-        throw new UnsupportedOperationException(); //TODO
+        Scope forScope = new Scope(scope);
+        scope = forScope;
+        try {
+            visit(ast.getInitialization());
+            while (requireType(Boolean.class, visit(ast.getCondition()))) {
+                for (Ast.Statement statement : ast.getStatements()) {
+                    visit(statement);
+                }
+                // If there's a way to specify the update outside of `getUpdate()`, handle it here.
+            }
+        } finally {
+            scope = forScope.getParent();
+        }
+        return Environment.NIL;
     }
+
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.While ast) {
-        throw new UnsupportedOperationException(); //TODO
+        while (requireType(Boolean.class, visit(ast.getCondition()))) {
+            for (Ast.Statement statement : ast.getStatements()) {
+                visit(statement);
+            }
+        }
+        return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Return ast) {
-        throw new UnsupportedOperationException(); //TODO
+        throw new Return(visit(ast.getValue()));
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Literal ast) {
-        throw new UnsupportedOperationException(); //TODO
+        return Environment.create(ast.getLiteral());
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Group ast) {
-        throw new UnsupportedOperationException(); //TODO
+        return visit(ast.getExpression());
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Binary ast) {
-        throw new UnsupportedOperationException(); //TODO
+        Environment.PlcObject leftObject = visit(ast.getLeft());
+        Environment.PlcObject rightObject = visit(ast.getRight());
+
+        switch (ast.getOperator()) {
+            case "&&":
+                return Environment.create(requireType(Boolean.class, leftObject) && requireType(Boolean.class, rightObject));
+            case "||":
+                return Environment.create(requireType(Boolean.class, leftObject) || requireType(Boolean.class, rightObject));
+            case "<":
+                return Environment.create(requireType(Comparable.class, leftObject).compareTo(requireType(leftObject.getValue().getClass(), rightObject)) < 0);
+            case "<=":
+                return Environment.create(requireType(Comparable.class, leftObject).compareTo(requireType(leftObject.getValue().getClass(), rightObject)) <= 0);
+            case ">":
+                return Environment.create(requireType(Comparable.class, leftObject).compareTo(requireType(leftObject.getValue().getClass(), rightObject)) > 0);
+            case ">=":
+                return Environment.create(requireType(Comparable.class, leftObject).compareTo(requireType(leftObject.getValue().getClass(), rightObject)) >= 0);
+            case "==":
+                return Environment.create(java.util.Objects.equals(leftObject.getValue(), rightObject.getValue()));
+            case "!=":
+                return Environment.create(!java.util.Objects.equals(leftObject.getValue(), rightObject.getValue()));
+            case "+":
+                if (leftObject.getValue() instanceof String || rightObject.getValue() instanceof String) {
+                    return Environment.create(leftObject.getValue().toString() + rightObject.getValue().toString());
+                } else if (leftObject.getValue() instanceof java.math.BigInteger && rightObject.getValue() instanceof java.math.BigInteger) {
+                    return Environment.create(((java.math.BigInteger) leftObject.getValue()).add((java.math.BigInteger) rightObject.getValue()));
+                }
+                break;
+            case "-":
+                if (leftObject.getValue() instanceof java.math.BigInteger && rightObject.getValue() instanceof java.math.BigInteger) {
+                    return Environment.create(((java.math.BigInteger) leftObject.getValue()).subtract((java.math.BigInteger) rightObject.getValue()));
+                }
+                break;
+            case "*":
+                if (leftObject.getValue() instanceof java.math.BigInteger && rightObject.getValue() instanceof java.math.BigInteger) {
+                    return Environment.create(((java.math.BigInteger) leftObject.getValue()).multiply((java.math.BigInteger) rightObject.getValue()));
+                }
+                break;
+            case "/":
+                if (leftObject.getValue() instanceof java.math.BigInteger && rightObject.getValue() instanceof java.math.BigInteger) {
+                    if (((java.math.BigInteger) rightObject.getValue()).equals(java.math.BigInteger.ZERO)) {
+                        throw new RuntimeException("Division by zero.");
+                    }
+                    return Environment.create(((java.math.BigInteger) leftObject.getValue()).divide((java.math.BigInteger) rightObject.getValue()));
+                }
+                break;
+        }
+        throw new RuntimeException("Invalid binary operation for operator: " + ast.getOperator());
     }
+
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Access ast) {
-        throw new UnsupportedOperationException(); //TODO
+        if (ast.getReceiver().isPresent()) {
+            // Get the receiver object first
+            Environment.PlcObject receiverObject = visit(ast.getReceiver().get());
+
+            // Retrieve the field from the receiver using getField which returns a Variable
+            Environment.Variable variable = receiverObject.getField(ast.getName());
+
+            // Return the PlcObject from the retrieved variable
+            return variable.getValue(); // Assuming this returns the PlcObject
+        } else {
+            // Lookup the variable directly
+            Environment.Variable variable = scope.lookupVariable(ast.getName());
+            return variable.getValue(); // Ensure this returns the PlcObject
+        }
     }
+
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Function ast) {
-        throw new UnsupportedOperationException(); //TODO
+        Environment.PlcObject receiver = ast.getReceiver().isPresent() ? visit(ast.getReceiver().get()) : null;
+        return receiver != null ? receiver.callMethod(ast.getName(), ast.getArguments().stream().map(this::visit).toList())
+                : scope.lookupFunction(ast.getName(), ast.getArguments().size())
+                .invoke(ast.getArguments().stream().map(this::visit).toList());
     }
 
     /**
