@@ -134,6 +134,72 @@ final class ParserTests {
                                 ),
                                 Arrays.asList()
                         )
+                ),
+                Arguments.of("Declaration", // LET x;
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "LET", 0),
+                                new Token(Token.Type.IDENTIFIER, "x", 4),
+                                new Token(Token.Type.OPERATOR, ";", 5)
+                        ),
+                        new Ast.Source(
+                                Arrays.asList(new Ast.Field("x", false, Optional.empty())),
+                                Arrays.asList()
+                        )
+                ),
+                Arguments.of("Initialization", // LET x = 1;
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "LET", 0),
+                                new Token(Token.Type.IDENTIFIER, "x", 4),
+                                new Token(Token.Type.OPERATOR, "=", 6),
+                                new Token(Token.Type.INTEGER, "1", 8),
+                                new Token(Token.Type.OPERATOR, ";", 9)
+                        ),
+                        new Ast.Source(
+                                Arrays.asList(new Ast.Field("x", false, Optional.of(new Ast.Expression.Literal(new BigInteger("1"))))),
+                                Arrays.asList()
+                        )
+                ),
+                Arguments.of("Constant Declaration", // LET CONST x;
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "LET", 0),
+                                new Token(Token.Type.IDENTIFIER, "CONST", 4),
+                                new Token(Token.Type.IDENTIFIER, "x", 10),
+                                new Token(Token.Type.OPERATOR, ";", 11)
+                        ),
+                        new Ast.Source(
+                                Arrays.asList(new Ast.Field("x", true, Optional.empty())),
+                                Arrays.asList()
+                        )
+                ),
+                Arguments.of("Constant Initialization", // LET CONST pi = 3.14;
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "LET", 0),
+                                new Token(Token.Type.IDENTIFIER, "CONST", 4),
+                                new Token(Token.Type.IDENTIFIER, "pi", 10),
+                                new Token(Token.Type.OPERATOR, "=", 13),
+                                new Token(Token.Type.DECIMAL, "3.14", 15),
+                                new Token(Token.Type.OPERATOR, ";", 19)
+                        ),
+                        new Ast.Source(
+                                Arrays.asList(new Ast.Field("pi", true, Optional.of(new Ast.Expression.Literal(new BigDecimal("3.14"))))),
+                                Arrays.asList()
+                        )
+                ),
+                Arguments.of("Missing Expression", // LET name = ;
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "LET", 0),
+                                new Token(Token.Type.IDENTIFIER, "name", 4),
+                                new Token(Token.Type.OPERATOR, "=", 9),
+                                new Token(Token.Type.OPERATOR, ";", 10)
+                        ),
+                        null // Expect parsing to fail due to missing expression
+                ),
+                Arguments.of("Missing Semicolon", // LET x
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "LET", 0),
+                                new Token(Token.Type.IDENTIFIER, "x", 4)
+                        ),
+                        null // Expect parsing to fail due to missing semicolon
                 )
 
         );
@@ -214,6 +280,38 @@ final class ParserTests {
                                 new Token(Token.Type.OPERATOR, ";", 19)
                         ),
                         new Ast.Statement.Declaration("name", Optional.of(new Ast.Expression.Access(Optional.empty(), "expr")))
+                ),
+                Arguments.of("Missing Expression", // LET name = ;
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "LET", 0),
+                                new Token(Token.Type.IDENTIFIER, "name", 4),
+                                new Token(Token.Type.OPERATOR, "=", 9),
+                                new Token(Token.Type.OPERATOR, ";", 10)
+                        ),
+                        null // Expect parsing to fail due to missing expression
+                ), Arguments.of("Missing Semicolon", // LET name
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "LET", 0),
+                                new Token(Token.Type.IDENTIFIER, "name", 4)
+                        ),
+                        null // Expect parsing to fail due to missing semicolon
+                ),
+                Arguments.of("No Initialization with Semicolon", // LET name;
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "LET", 0),
+                                new Token(Token.Type.IDENTIFIER, "name", 4),
+                                new Token(Token.Type.OPERATOR, ";", 8)
+                        ),
+                        new Ast.Statement.Declaration("name", Optional.empty())
+                ),
+                Arguments.of("Initialization without Semicolon", // LET name = expr
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "LET", 0),
+                                new Token(Token.Type.IDENTIFIER, "name", 4),
+                                new Token(Token.Type.OPERATOR, "=", 9),
+                                new Token(Token.Type.IDENTIFIER, "expr", 11)
+                        ),
+                        null // Expect parsing to fail due to missing semicolon
                 )
         );
     }
@@ -348,6 +446,47 @@ final class ParserTests {
                                 ),
                                 Arrays.asList(new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt1"))) // Body statements
                         )
+                ),  Arguments.of("Condition Only",
+                        Arrays.asList(
+                                // FOR ( ; expr; ) stmt; END
+                                new Token(Token.Type.IDENTIFIER, "FOR", 0),
+                                new Token(Token.Type.OPERATOR, "(", 4),
+                                new Token(Token.Type.OPERATOR, ";", 5),
+                                new Token(Token.Type.IDENTIFIER, "expr", 6),
+                                new Token(Token.Type.OPERATOR, ";", 10),
+                                new Token(Token.Type.OPERATOR, ")", 12),
+                                new Token(Token.Type.IDENTIFIER, "stmt", 14),
+                                new Token(Token.Type.OPERATOR, ";", 18),
+                                new Token(Token.Type.IDENTIFIER, "END", 20)
+                        ), null
+                ),  Arguments.of("Initialization Condition",
+                        Arrays.asList(
+                                // FOR (x = expr1; expr2; ) END
+                                new Token(Token.Type.IDENTIFIER, "FOR", 0),
+                                new Token(Token.Type.OPERATOR, "(", 4),
+                                new Token(Token.Type.IDENTIFIER, "x", 5),
+                                new Token(Token.Type.OPERATOR, "=", 7),
+                                new Token(Token.Type.IDENTIFIER, "expr1", 9),
+                                new Token(Token.Type.OPERATOR, ";", 15),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 17),
+                                new Token(Token.Type.OPERATOR, ";", 23),
+                                new Token(Token.Type.OPERATOR, ")", 25),
+                                new Token(Token.Type.IDENTIFIER, "END", 27)
+                        ), null
+                ), Arguments.of("Condition Increment",
+                        Arrays.asList(
+                                // FOR (; expr1; x = expr2) END
+                                new Token(Token.Type.IDENTIFIER, "FOR", 0),
+                                new Token(Token.Type.OPERATOR, "(", 4),
+                                new Token(Token.Type.OPERATOR, ";", 5),
+                                new Token(Token.Type.IDENTIFIER, "expr1", 6),
+                                new Token(Token.Type.OPERATOR, ";", 12),
+                                new Token(Token.Type.IDENTIFIER, "x", 14),
+                                new Token(Token.Type.OPERATOR, "=", 16),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 18),
+                                new Token(Token.Type.OPERATOR, ")", 24),
+                                new Token(Token.Type.IDENTIFIER, "END", 26)
+                        ), null
                 ),
                 Arguments.of("Missing END",
                         Arrays.asList(
@@ -367,10 +506,108 @@ final class ParserTests {
                                 new Token(Token.Type.IDENTIFIER, "stmt1", 37),
                                 new Token(Token.Type.OPERATOR, ";", 42)
                         ),
-                        null // throws error
+                        null // Should throw error for missing 'END'
+                ),
+                Arguments.of("Missing Initialization",
+                        Arrays.asList(
+                                // FOR (x = ; expr1; y = expr3) END
+                                new Token(Token.Type.IDENTIFIER, "FOR", 0),
+                                new Token(Token.Type.OPERATOR, "(", 4),
+                                new Token(Token.Type.IDENTIFIER, "x", 5),
+                                new Token(Token.Type.OPERATOR, "=", 7),
+                                new Token(Token.Type.OPERATOR, ";", 9),
+                                new Token(Token.Type.IDENTIFIER, "expr1", 11),
+                                new Token(Token.Type.OPERATOR, ";", 17),
+                                new Token(Token.Type.IDENTIFIER, "y", 19),
+                                new Token(Token.Type.OPERATOR, "=", 21),
+                                new Token(Token.Type.IDENTIFIER, "expr3", 23),
+                                new Token(Token.Type.OPERATOR, ")", 29),
+                                new Token(Token.Type.IDENTIFIER, "END", 31)
+                        ), null
+//
+                ),
+                Arguments.of("Missing Increment",
+                        Arrays.asList(
+                                // FOR (x = expr1; expr2; y = ) END
+                                new Token(Token.Type.IDENTIFIER, "FOR", 0),
+                                new Token(Token.Type.OPERATOR, "(", 4),
+                                new Token(Token.Type.IDENTIFIER, "x", 5),
+                                new Token(Token.Type.OPERATOR, "=", 7),
+                                new Token(Token.Type.IDENTIFIER, "expr1", 9),
+                                new Token(Token.Type.OPERATOR, ";", 15),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 17),
+                                new Token(Token.Type.OPERATOR, ";", 23),
+                                new Token(Token.Type.IDENTIFIER, "y", 25),
+                                new Token(Token.Type.OPERATOR, "=", 27),
+                                new Token(Token.Type.OPERATOR, ";", 29),
+                                new Token(Token.Type.OPERATOR, ")", 31),
+                                new Token(Token.Type.IDENTIFIER, "END", 33)
+                        ), null
+//
+                ),
+                Arguments.of("Missing Syntax - Opening Parenthesis",
+                        Arrays.asList(
+                                // FOR x = expr1; expr2; y = expr3) stmt; END
+                                new Token(Token.Type.IDENTIFIER, "FOR", 0),
+                                new Token(Token.Type.OPERATOR, "x", 4),
+                                new Token(Token.Type.OPERATOR, "=", 6),
+                                new Token(Token.Type.IDENTIFIER, "expr1", 8),
+                                new Token(Token.Type.OPERATOR, ";", 14),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 16),
+                                new Token(Token.Type.OPERATOR, ";", 22),
+                                new Token(Token.Type.IDENTIFIER, "y", 24),
+                                new Token(Token.Type.OPERATOR, "=", 26),
+                                new Token(Token.Type.IDENTIFIER, "expr3", 28),
+                                new Token(Token.Type.OPERATOR, ")", 34),
+                                new Token(Token.Type.IDENTIFIER, "stmt", 36),
+                                new Token(Token.Type.OPERATOR, ";", 41),
+                                new Token(Token.Type.IDENTIFIER, "END", 43)
+                        ),
+                        null // Should throw error for missing '('
+                ),
+                Arguments.of("Missing Syntax - Closing Parenthesis",
+                        Arrays.asList(
+                                // FOR (x = expr1; expr2; y = expr3 stmt; END
+                                new Token(Token.Type.IDENTIFIER, "FOR", 0),
+                                new Token(Token.Type.OPERATOR, "(", 4),
+                                new Token(Token.Type.IDENTIFIER, "x", 5),
+                                new Token(Token.Type.OPERATOR, "=", 7),
+                                new Token(Token.Type.IDENTIFIER, "expr1", 9),
+                                new Token(Token.Type.OPERATOR, ";", 15),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 17),
+                                new Token(Token.Type.OPERATOR, ";", 23),
+                                new Token(Token.Type.IDENTIFIER, "y", 25),
+                                new Token(Token.Type.OPERATOR, "=", 27),
+                                new Token(Token.Type.IDENTIFIER, "expr3", 29),
+                                new Token(Token.Type.OPERATOR, "stmt", 35),
+                                new Token(Token.Type.OPERATOR, ";", 39),
+                                new Token(Token.Type.IDENTIFIER, "END", 41)
+                        ),
+                        null // Should throw error for missing ')'
+                ),
+                Arguments.of("Missing Syntax - END",
+                        Arrays.asList(
+                                // FOR (x = expr1; expr2; y = expr3) stmt;
+                                new Token(Token.Type.IDENTIFIER, "FOR", 0),
+                                new Token(Token.Type.OPERATOR, "(", 4),
+                                new Token(Token.Type.IDENTIFIER, "x", 5),
+                                new Token(Token.Type.OPERATOR, "=", 7),
+                                new Token(Token.Type.IDENTIFIER, "expr1", 9),
+                                new Token(Token.Type.OPERATOR, ";", 15),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 17),
+                                new Token(Token.Type.OPERATOR, ";", 23),
+                                new Token(Token.Type.IDENTIFIER, "y", 25),
+                                new Token(Token.Type.OPERATOR, "=", 27),
+                                new Token(Token.Type.IDENTIFIER, "expr3", 29),
+                                new Token(Token.Type.OPERATOR, ")", 35),
+                                new Token(Token.Type.IDENTIFIER, "stmt", 37),
+                                new Token(Token.Type.OPERATOR, ";", 42)
+                        ),
+                        null // Should throw error for missing 'END'
                 )
         );
     }
+
 
     @ParameterizedTest
     @MethodSource
@@ -394,7 +631,30 @@ final class ParserTests {
                                 new Ast.Expression.Access(Optional.empty(), "expr"),
                                 Arrays.asList(new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt")))
                         )
-                ),  // Missing END: WHILE expr DO stmt;
+                ),    Arguments.of("Multiple Statements",
+                        Arrays.asList(
+                                // WHILE expr DO stmt1; stmt2; stmt3; END
+                                new Token(Token.Type.IDENTIFIER, "WHILE", 0),
+                                new Token(Token.Type.IDENTIFIER, "expr", 6),
+                                new Token(Token.Type.IDENTIFIER, "DO", 11),
+                                new Token(Token.Type.IDENTIFIER, "stmt1", 14),
+                                new Token(Token.Type.OPERATOR, ";", 19),
+                                new Token(Token.Type.IDENTIFIER, "stmt2", 21),
+                                new Token(Token.Type.OPERATOR, ";", 26),
+                                new Token(Token.Type.IDENTIFIER, "stmt3", 28),
+                                new Token(Token.Type.OPERATOR, ";", 33),
+                                new Token(Token.Type.IDENTIFIER, "END", 35)
+                        ),
+                        new Ast.Statement.While(
+                                new Ast.Expression.Access(Optional.empty(), "expr"),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt1")),
+                                        new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt2")),
+                                        new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt3"))
+                                ) // Multiple body statements
+                        )
+                ),
+                // Missing END: WHILE expr DO stmt;
                 Arguments.of("Missing END",
                         Arrays.asList(
                                 new Token(Token.Type.IDENTIFIER, "WHILE", 0),
@@ -404,6 +664,17 @@ final class ParserTests {
                                 new Token(Token.Type.OPERATOR, ";", 18)
                         ),
                         null // throws error
+                ),
+                Arguments.of("Missing DO",
+                        Arrays.asList(
+                                // WHILE expr stmt; END
+                                new Token(Token.Type.IDENTIFIER, "WHILE", 0),
+                                new Token(Token.Type.IDENTIFIER, "expr", 6),
+                                new Token(Token.Type.IDENTIFIER, "stmt", 11),
+                                new Token(Token.Type.OPERATOR, ";", 15),
+                                new Token(Token.Type.IDENTIFIER, "END", 17)
+                        ),
+                        null // Should throw error for missing 'DO'
                 )
         );
     }
