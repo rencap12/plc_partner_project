@@ -369,6 +369,9 @@ public final class Parser {
 
         if (peek("DO")){
             match("DO");
+        } else{
+            throw new ParseException("Expected 'DO'", tokens.index);
+
         }
         // make logic to catch statements if no DO present
 
@@ -522,7 +525,9 @@ public final class Parser {
                 if (peek(Token.Type.IDENTIFIER)) {
                     member = tokens.get(0).getLiteral();
                     match(Token.Type.IDENTIFIER);
-                } // throw error if not identifier - implement later
+                } else {
+                    throw new ParseException("Expected identifier type", tokens.index);
+                }
 
                 // get ( could be start of function call
                 if (peek("(")) {
