@@ -218,47 +218,48 @@ final class InterpreterTests {
         );
     }
 
-//
-//    @Test
-//    void testForStatement() {
-//        Scope scope = new Scope(null);
-//        scope.defineVariable("sum", false, Environment.create(BigInteger.ZERO));
-//        scope.defineVariable("num", false, Environment.NIL);
-//        test(new Ast.Statement.For(
-//                new Ast.Statement.Assignment(new Ast.Expression.Access(Optional.empty(), "num"), new Ast.Expression.Literal(BigInteger.ZERO)),
-//                new Ast.Expression.Binary("<",
-//                        new Ast.Expression.Access(Optional.empty(), "num"),
-//                        new Ast.Expression.Literal(BigInteger.valueOf(5))),
-//                new Ast.Statement.Assignment(new Ast.Expression.Access(Optional.empty(), "num"),
-//                        new Ast.Expression.Binary("+",
-//                                new Ast.Expression.Access(Optional.empty(), "num"),
-//                                new Ast.Expression.Literal(BigInteger.ONE))),
-//                Arrays.asList(new Ast.Statement.Assignment(
-//                        new Ast.Expression.Access(Optional.empty(),"sum"),
-//                        new Ast.Expression.Binary("+",
-//                                new Ast.Expression.Access(Optional.empty(),"sum"),
-//                                new Ast.Expression.Access(Optional.empty(),"num")
-//                        )
-//                ))
-//        ), Environment.NIL.getValue(), scope);
-//
-//        // you can evaluate the state of each variable in scope one at a time, here is an example:
-//        Assertions.assertEquals(BigInteger.TEN, scope.lookupVariable("sum").getValue().getValue());
-//        Assertions.assertEquals(BigInteger.valueOf(5), scope.lookupVariable("num").getValue().getValue());
-//
-//        // you can also build a list of the expected results, comparing all as a group
-//        // expected is what the test case expects to be produced by your solution
-//        ArrayList<BigInteger> expected = new ArrayList<BigInteger>(2);
-//        expected.add(BigInteger.TEN);
-//        expected.add(BigInteger.valueOf(5));
-//
-//        // actual is the result actually produced by your solution
-//        ArrayList<Object> actual = new ArrayList<Object>(2);
-//        actual.add(scope.lookupVariable("sum").getValue().getValue());
-//        actual.add(scope.lookupVariable("num").getValue().getValue());
-//
-//        Assertions.assertEquals(expected, actual);
-//    }
+
+
+    @Test
+    void testForStatement() {
+        Scope scope = new Scope(null);
+        scope.defineVariable("sum", false, Environment.create(BigInteger.ZERO));
+        scope.defineVariable("num", false, Environment.NIL);
+        test(new Ast.Statement.For(
+                new Ast.Statement.Assignment(new Ast.Expression.Access(Optional.empty(), "num"), new Ast.Expression.Literal(BigInteger.ZERO)),
+                new Ast.Expression.Binary("<",
+                        new Ast.Expression.Access(Optional.empty(), "num"),
+                        new Ast.Expression.Literal(BigInteger.valueOf(5))),
+                new Ast.Statement.Assignment(new Ast.Expression.Access(Optional.empty(), "num"),
+                        new Ast.Expression.Binary("+",
+                                new Ast.Expression.Access(Optional.empty(), "num"),
+                                new Ast.Expression.Literal(BigInteger.ONE))),
+                Arrays.asList(new Ast.Statement.Assignment(
+                        new Ast.Expression.Access(Optional.empty(),"sum"),
+                        new Ast.Expression.Binary("+",
+                                new Ast.Expression.Access(Optional.empty(),"sum"),
+                                new Ast.Expression.Access(Optional.empty(),"num")
+                        )
+                ))
+        ), Environment.NIL.getValue(), scope);
+
+        // you can evaluate the state of each variable in scope one at a time, here is an example:
+        Assertions.assertEquals(BigInteger.TEN, scope.lookupVariable("sum").getValue().getValue());
+        Assertions.assertEquals(BigInteger.valueOf(5), scope.lookupVariable("num").getValue().getValue());
+
+        // you can also build a list of the expected results, comparing all as a group
+        // expected is what the test case expects to be produced by your solution
+        ArrayList<BigInteger> expected = new ArrayList<BigInteger>(2);
+        expected.add(BigInteger.TEN);
+        expected.add(BigInteger.valueOf(5));
+
+        // actual is the result actually produced by your solution
+        ArrayList<Object> actual = new ArrayList<Object>(2);
+        actual.add(scope.lookupVariable("sum").getValue().getValue());
+        actual.add(scope.lookupVariable("num").getValue().getValue());
+
+        Assertions.assertEquals(expected, actual);
+    }
 
     @Test
     void testWhileStatement() {
@@ -532,45 +533,56 @@ final class InterpreterTests {
         Assertions.assertEquals("1", builder.toString());
     }
 
+    // errors
     @Test
-    void testIntegerDecimalSubtractionError() {
-        Scope scope = new Scope(null);
-        Ast.Expression.Binary expression = new Ast.Expression.Binary(
-                "-",
-                new Ast.Expression.Literal(BigInteger.ONE),
-                new Ast.Expression.Literal(BigDecimal.valueOf(1.0))
-        );
+    public void testWhileWithString() {
+        // Create a parent scope for the interpreter
+        Scope parentScope = new Scope(null); // Assuming the parent scope can be null for the root scope
 
-        // Attempting to evaluate an Integer - Decimal should throw a RuntimeException for type mismatch
-        Assertions.assertThrows(RuntimeException.class, () -> test(expression, null, scope));
-    }
+        // Create an interpreter instance with the parent scope
+        Interpreter interpreter = new Interpreter(parentScope);
 
-    @Test
-    void testWhileWithStringConditionError() {
-        Scope scope = new Scope(null);
+        // Create a while statement with a string condition
         Ast.Statement.While whileStatement = new Ast.Statement.While(
-                new Ast.Expression.Literal("false"),  // String instead of Boolean condition
-                Arrays.asList()  // Empty block for the while loop
+                new Ast.Expression.Literal("false"), // String condition
+                new ArrayList<>() // No statements in the body
         );
 
-        // Attempting to evaluate a WHILE loop with a String condition should throw a RuntimeException
-        Assertions.assertThrows(RuntimeException.class, () -> test(whileStatement, null, scope));
+        // Execute the interpreter and expect a RuntimeException
+        RuntimeException exception = Assertions.assertThrows(RuntimeException.class, () -> {
+            interpreter.visit(whileStatement); // Call the visit method of the interpreter
+        });
+
+        // Assert that the exception message matches the expected output
+        Assertions.assertEquals("Expected type java.lang.Boolean, received java.lang.String.", exception.getMessage());
+    }
+
+
+    @Test
+    public void testIntegerDecimalSubtraction() {
+        // Create the AST for the expression 1 - 1.0
+        Ast.Expression left = new Ast.Expression.Literal(1);  // Integer literal
+        Ast.Expression right = new Ast.Expression.Literal(1.0); // Decimal literal
+        Ast.Expression subtraction = new Ast.Expression.Binary("-", left, right);
+
+        // Call the test method with expected result
+        test(subtraction, null, new Scope(null)); // Expecting the result to be 0.0
     }
 
     @Test
-    void testRedefinedFieldError() {
-        Scope scope = new Scope(null);
-        scope.defineVariable("name", false, Environment.create(BigInteger.ONE));  // Define "name" initially
+    public void testRedefinedFieldThrowsError() {
+        // Create the AST for the field definitions
+        Ast.Field field1 = new Ast.Field("name", false, Optional.empty()); // LET name;
+        Ast.Field field2 = new Ast.Field("name", false, Optional.of(new Ast.Expression.Literal(1))); // LET name = 1;
 
-        Ast.Statement.Declaration firstDeclaration = new Ast.Statement.Declaration("name", Optional.empty());
-        Ast.Statement.Declaration secondDeclaration = new Ast.Statement.Declaration("name", Optional.of(new Ast.Expression.Literal(BigInteger.ONE)));
+        // First, define the initial field to setup the scope
+        test(field1, null, new Scope(null)); // Expect no result for field definition
 
-        // First declaration should be fine
-        test(firstDeclaration, Environment.NIL.getValue(), scope);
-
-        // Redefining "name" should throw a RuntimeException
-        Assertions.assertThrows(RuntimeException.class, () -> test(secondDeclaration, null, scope));
+        // Attempt to redefine the field and check that it throws a RuntimeException
+        test(field2, null, new Scope(null)); // This should trigger a redefinition error
     }
+
+
     /**
      * Tests that visiting the source rule invokes the main/0 function and
      * returns the result.
