@@ -450,23 +450,6 @@ final class InterpreterTests {
                 Arguments.of("Print",
                         new Ast.Expression.Function(Optional.empty(), "print", Arrays.asList(new Ast.Expression.Literal("Hello, World!"))),
                         Environment.NIL.getValue()
-                ),
-                // from chat, may need to change
-                Arguments.of("Function",
-                        new Ast.Expression.Function(Optional.empty(), "function", Arrays.asList()),
-                        BigInteger.ONE
-                ),
-                Arguments.of("Method",
-                        new Ast.Expression.Function(Optional.of(new Ast.Expression.Access(Optional.empty(), "object")), "method", Arrays.asList()),
-                        "object.method"
-                ),
-                Arguments.of("Print",
-                        new Ast.Expression.Function(Optional.empty(), "print", Arrays.asList(new Ast.Expression.Literal("Hello, World!"))),
-                        Environment.NIL.getValue()
-                ),
-                Arguments.of("Log",
-                        new Ast.Expression.Function(Optional.empty(), "log", Arrays.asList(new Ast.Expression.Literal(BigInteger.ONE))),
-                        BigInteger.ONE
                 )
         );
     }

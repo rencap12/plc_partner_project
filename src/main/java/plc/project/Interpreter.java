@@ -139,6 +139,11 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.While ast) {
+//        String literal = ((Ast.Expression.Literal) ast.getCondition()).getLiteral().toString();
+//        if (!literal.equals("FALSE") && !literal.equals("TRUE")){
+//            System.out.println("IS THIS WORKING LOL");
+//            throw new RuntimeException("Invalid expression provided. " + literal + " is not a boolean value");
+//        }
         while (requireType(Boolean.class, visit(ast.getCondition()))) {
             for (Ast.Statement statement : ast.getStatements()) {
                 visit(statement);
