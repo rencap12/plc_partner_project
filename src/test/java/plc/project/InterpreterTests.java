@@ -398,8 +398,8 @@ final class InterpreterTests {
     private static Stream<Arguments> testAccessExpression() {
         return Stream.of(
                 // FIX THESE TO MATCH Access (2):
-                //Variable: variable, scope = {variable = 1}
-                //Field: object.field, scope = {object = PlcObject{field = 1}}
+//                Variable: variable, scope = {variable = 1}
+//                Field: object.field, scope = {object = PlcObject{field = 1}}
 //                Arguments.of("Variable",
 //                        new Ast.Expression.Access(Optional.empty(), "variable"),
 //                        BigInteger.ONE
@@ -509,6 +509,8 @@ final class InterpreterTests {
         Assertions.assertEquals("1", builder.toString());
     }
 
+
+
     /**
      * Tests that visiting an expression statement evaluates the expression and
      * returns {@code NIL}. This tests relies on function calls.
@@ -569,17 +571,92 @@ final class InterpreterTests {
         test(subtraction, null, new Scope(null)); // Expecting the result to be 0.0
     }
 
+//    @Test
+//    public void testRedefinedFieldThrowsError() {
+//        Scope scope = new Scope(null);
+//        Ast.Field field1 = new Ast.Field("name", false, Optional.empty()); // LET name;
+//        Ast.Field field2 = new Ast.Field("name", false, Optional.of(new Ast.Expression.Literal(1))); // LET name = 1;
+//
+////        // First, define the initial field
+////        test(field1, null, scope); // Expect no result for field definition
+//
+//        // Attempt to redefine the field and check that it throws a RuntimeException
+//        RuntimeException exception = Assertions.assertThrows(RuntimeException.class, () -> {
+//            test(field2, null, scope); // This should trigger a redefinition error
+//        });
+//
+//        Assertions.assertEquals("Field 'name' is already defined.", exception.getMessage());
+//    }
+
+
+
     @Test
-    public void testRedefinedFieldThrowsError() {
-        // Create the AST for the field definitions
-        Ast.Field field1 = new Ast.Field("name", false, Optional.empty()); // LET name;
-        Ast.Field field2 = new Ast.Field("name", false, Optional.of(new Ast.Expression.Literal(1))); // LET name = 1;
+    void testBinaryOperationTypeMismatch() {
+        Interpreter interpreter = new Interpreter(new Scope(null));
+        Scope scope = interpreter.getScope();
+        Ast.Expression.Binary expression = new Ast.Expression.Binary(
+                "-",
+                new Ast.Expression.Literal(java.math.BigInteger.ONE),
+                new Ast.Expression.Literal(java.math.BigDecimal.valueOf(1.0))
+        );
 
-        // First, define the initial field to setup the scope
-        test(field1, null, new Scope(null)); // Expect no result for field definition
+        // Type mismatch between BigInteger and BigDecimal should throw a RuntimeException
+        Assertions.assertThrows(RuntimeException.class, () -> interpreter.visit(expression));
+    }
 
-        // Attempt to redefine the field and check that it throws a RuntimeException
-        test(field2, null, new Scope(null)); // This should trigger a redefinition error
+    @Test
+    void testVariableRedefinitionError() {
+        Interpreter interpreter = new Interpreter(new Scope(null));
+        Scope scope = interpreter.getScope();
+
+        // Declare a variable "x" in the scope
+        Ast.Statement.Declaration declaration1 = new Ast.Statement.Declaration("x", Optional.of(new Ast.Expression.Literal(java.math.BigInteger.ONE)));
+        interpreter.visit(declaration1);
+
+        // Attempt to declare "x" again should throw an error
+        Ast.Statement.Declaration declaration2 = new Ast.Statement.Declaration("x", Optional.of(new Ast.Expression.Literal(java.math.BigInteger.TEN)));
+        Assertions.assertThrows(RuntimeException.class, () -> interpreter.visit(declaration2));
+    }
+
+    @Test
+    void testDivisionByZeroBigInteger() {
+        Interpreter interpreter = new Interpreter(new Scope(null));
+
+        // Divide BigInteger by zero
+        Ast.Expression.Binary expression = new Ast.Expression.Binary(
+                "/",
+                new Ast.Expression.Literal(java.math.BigInteger.ONE),
+                new Ast.Expression.Literal(java.math.BigInteger.ZERO)
+        );
+
+        // Expect RuntimeException for division by zero
+        Assertions.assertThrows(RuntimeException.class, () -> interpreter.visit(expression));
+    }
+
+    @Test
+    void testDivisionByZeroBigDecimal() {
+        Interpreter interpreter = new Interpreter(new Scope(null));
+
+        // Divide BigDecimal by zero
+        Ast.Expression.Binary expression = new Ast.Expression.Binary(
+                "/",
+                new Ast.Expression.Literal(new java.math.BigDecimal("1.0")),
+                new Ast.Expression.Literal(new java.math.BigDecimal("0.0"))
+        );
+
+        // Expect RuntimeException for division by zero
+        Assertions.assertThrows(RuntimeException.class, () -> interpreter.visit(expression));
+    }
+
+    @Test
+    void testUndefinedVariableAccess() {
+        Interpreter interpreter = new Interpreter(new Scope(null));
+
+        // Access an undefined variable "y"
+        Ast.Expression.Access accessExpression = new Ast.Expression.Access(Optional.empty(), "y");
+
+        // Expect RuntimeException due to undefined variable
+        Assertions.assertThrows(RuntimeException.class, () -> interpreter.visit(accessExpression));
     }
 
 
