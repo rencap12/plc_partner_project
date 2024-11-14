@@ -153,7 +153,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Statement.Declaration ast) {
         Environment.Type type = determineDeclarationType(ast);
-        scope.defineVariable(ast.getName(), ast.getName(), type, true, Environment.NIL);
+        scope.defineVariable(ast.getName(), ast.getName(), type, false, Environment.NIL);
         ast.setVariable(scope.lookupVariable(ast.getName()));
         return null;
     }
