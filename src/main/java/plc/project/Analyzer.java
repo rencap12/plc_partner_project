@@ -26,6 +26,20 @@ public final class Analyzer implements Ast.Visitor<Void> {
         return scope;
     }
 
+    private void checkTypesMatch(Ast.Expression.Binary ast) {   // Used in visit(Ast.Expression.Binary) -- checks if rhs and lhs types match and sets the ast type accordingly
+        if (ast.getLeft().getType().equals(Environment.Type.INTEGER) && ast.getRight().getType().equals(Environment.Type.INTEGER)) {
+            ast.setType(Environment.Type.INTEGER);
+        }
+        else if (ast.getLeft().getType().equals(Environment.Type.DECIMAL) && ast.getRight().getType().equals(Environment.Type.DECIMAL)) {
+            ast.setType(Environment.Type.DECIMAL);
+        }
+        else {
+            throw new RuntimeException("Invalid binary expression.");
+        }
+    }
+
+
+
     @Override
     public Void visit(Ast.Source ast) {
         boolean mainPresent = false;
@@ -256,22 +270,125 @@ public final class Analyzer implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Expression.Binary ast) {
 
-        throw new UnsupportedOperationException();  // TODO
+        switch (ast.getOperator()) {
+            case "&&":
+            case"||": {
+                // Visit the left and right sides of the expression:
+                visit(ast.getLeft());
+                visit(ast.getRight());
+                // Assign a type to the AST:
+                if (ast.getLeft().getType().equals(Environment.Type.BOOLEAN) && ast.getRight().getType().equals(Environment.Type.BOOLEAN)) {
+                    ast.setType(Environment.Type.BOOLEAN);
+                }
+                else {
+                    throw new RuntimeException("Expected boolean values on both sides of the binary expression.");
+                }
+                break;
+            }
+            case "<":
+            case ">":
+            case "==":
+            case "!=": {
+                // Visit the left and right sides of the expression:
+                visit(ast.getLeft());
+                visit(ast.getRight());
+                // Check that both sides of the expression are subtypes of COMPARABLE:
+                requireAssignable(Environment.Type.COMPARABLE, ast.getLeft().getType());
+                requireAssignable(Environment.Type.COMPARABLE, ast.getRight().getType());
+                // Check that both sides of the expression are of the same type. If so, assign a type to the AST:
+                if (ast.getLeft().getType().equals(ast.getRight().getType())) {
+                    ast.setType(Environment.Type.BOOLEAN);
+                }
+                else {
+                    throw new RuntimeException("Left and right sides of equality statement must match.");
+                }
+                break;
+            }
+            case "+": {
+                // Visit the left and right sides of the expression:
+                visit(ast.getLeft());
+                visit(ast.getRight());
+                // Assign a type to the AST:
+                if (ast.getLeft().getType().equals(Environment.Type.STRING) || ast.getRight().getType().equals(Environment.Type.STRING)) {
+                    ast.setType(Environment.Type.STRING);
+                }
+                else checkTypesMatch(ast);
+                break;
+            }
+            case "-":
+            case "*":
+            case "/": {
+                // Visit the left and right sides of the expression:
+                visit(ast.getLeft());
+                visit(ast.getRight());
+                // Assign a type to the AST:
+                checkTypesMatch(ast);
+                break;
+            }
+            case "^": {
+                // Visit the left and right sides of the expression:
+                visit(ast.getLeft());
+                visit(ast.getRight());
+                // Assign a type to the AST:
+                if ((ast.getLeft().getType().equals(Environment.Type.INTEGER) || ast.getLeft().getType().equals(Environment.Type.DECIMAL)) && ast.getRight().getType().equals(Environment.Type.INTEGER)) {
+                    ast.setType(ast.getLeft().getType());
+                }
+                else {
+                    throw new RuntimeException("Invalid binary expression.");
+                }
+                break;
+            }
+        }
+
+        return null;
     }
 
     @Override
     public Void visit(Ast.Expression.Access ast) {
 
-        throw new UnsupportedOperationException();  // TODO
+//        // Check the exception condition:
+//        if (ast.getOffset().isPresent()) {
+//            visit(ast.getOffset().get());
+//            if (!ast.getOffset().get().getType().equals(Environment.Type.INTEGER)) {
+//                throw new RuntimeException("Offset must be an integer value.");
+//            }
+//        }
+//        // Set the variable of the expression:
+//        ast.setVariable(scope.lookupVariable(ast.getName()));
+
+        return null;
     }
 
     @Override
     public Void visit(Ast.Expression.Function ast) {
-        throw new UnsupportedOperationException();  // TODO
+
+        // Set the function of the expression:
+        ast.setFunction(scope.lookupFunction(ast.getName(), ast.getArguments().size()));
+        // Check that the argument types are assignable to the parameter types:
+        List<Ast.Expression> args = ast.getArguments();
+        List<Environment.Type> params = ast.getFunction().getParameterTypes();
+        for (int i = 0; i < args.size(); i++) {
+            visit(args.get(i)); // Visit each argument
+            requireAssignable(params.get(i), args.get(i).getType());
+        }
+
+        return null;
     }
 
     public static void requireAssignable(Environment.Type target, Environment.Type type) {
-        throw new UnsupportedOperationException();  // TODO
+        if (target.equals(type)) {
+            return;
+        }
+        if (target.equals(Environment.Type.ANY)) {
+            return;
+        }
+        if (target.equals(Environment.Type.COMPARABLE)) {
+            if (type.getName().equals("Integer") || type.getName().equals("Decimal") || type.getName().equals("Character")
+                    || type.getName().equals("String")) {
+                return;
+            }
+        }
+        throw new RuntimeException("Invalid assignment: attempting to assign " + type.getName() + " to a " + target.getName() + " variable.");
     }
 
 }
