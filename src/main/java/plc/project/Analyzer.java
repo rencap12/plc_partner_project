@@ -347,14 +347,14 @@ public final class Analyzer implements Ast.Visitor<Void> {
     public Void visit(Ast.Expression.Access ast) {
 
 //        // Check the exception condition:
-//        if (ast.getOffset().isPresent()) {
+//        if (ast.().isPresent()) {
 //            visit(ast.getOffset().get());
 //            if (!ast.getOffset().get().getType().equals(Environment.Type.INTEGER)) {
 //                throw new RuntimeException("Offset must be an integer value.");
 //            }
 //        }
-//        // Set the variable of the expression:
-//        ast.setVariable(scope.lookupVariable(ast.getName()));
+        // Set the variable of the expression:
+        ast.setVariable(scope.lookupVariable(ast.getName()));
 
         return null;
     }
