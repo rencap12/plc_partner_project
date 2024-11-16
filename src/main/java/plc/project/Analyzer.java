@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import plc.project.Environment.PlcObject;
 
 /**
@@ -359,16 +360,59 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.Access ast) {
-        ast.setVariable(scope.lookupVariable(ast.getName()));
+        // If the access has a receiver (e.g., object.field)
+        if (ast.getReceiver().isPresent()) {
+            // Visit the receiver expression
+            visit(ast.getReceiver().get());
+
+            // Get the type of the receiver expression
+            Environment.Type receiverType = ast.getReceiver().get().getType();
+
+            // Attempt to resolve the field by its name
+            Environment.Variable field = receiverType.getField(ast.getName());
+            if (field == null) {
+                throw new RuntimeException("Field '" + ast.getName() + "' does not exist in receiver type.");
+            }
+
+            // Set the resolved variable
+            ast.setVariable(field);
+        } else {
+            // Simple variable access (e.g., variable)
+            ast.setVariable(scope.lookupVariable(ast.getName()));
+        }
         return null;
     }
 
+
+
     @Override
     public Void visit(Ast.Expression.Function ast) {
-        ast.setFunction(scope.lookupFunction(ast.getName(), ast.getArguments().size()));
+        if (ast.getReceiver().isPresent()) {
+            // If there is a receiver (e.g., object.method())
+            Ast.Expression receiver = ast.getReceiver().get();
+            visit(receiver); // Visit the receiver expression
+
+            // Get the receiver's type
+            Environment.Type receiverType = receiver.getType();
+
+            // Lookup the method in the receiver's type
+            Environment.Function method = receiverType.getFunction(ast.getName(), ast.getArguments().size());
+            if (method == null) {
+                throw new RuntimeException("Method '" + ast.getName() + "' does not exist in receiver type.");
+            }
+
+            // Set the resolved method
+            ast.setFunction(method);
+        } else {
+            // No receiver (e.g., function())
+            ast.setFunction(scope.lookupFunction(ast.getName(), ast.getArguments().size()));
+        }
+
+        // Validate function arguments
         validateFunctionArguments(ast);
         return null;
     }
+
 
     private void validateFunctionArguments(Ast.Expression.Function ast) {
         List<Ast.Expression> args = ast.getArguments();
