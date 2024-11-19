@@ -78,6 +78,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
         return null;
     }
 
+
     private void defineFieldVariable(Ast.Field ast) {
         scope.defineVariable(
                 ast.getName(),
@@ -166,6 +167,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
             }
             visit(ast.getValue().get());
             return ast.getValue().get().getType();
+        } else if (ast.getTypeName().isPresent() && ast.getTypeName().get().equals("Unknown")){
+            throw new RuntimeException("Type of declared variable could not be discerned.");
         }
 
         Environment.Type type = Environment.getType(ast.getTypeName().get());
@@ -436,7 +439,45 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.For ast) {
-        throw new UnsupportedOperationException();
+
+        // Create a new scope for the for loop
+        Scope parentScope = scope;
+        try {
+            scope = new Scope(parentScope);
+
+            // Visit and validate initialization if present
+            if (ast.getInitialization() != null) {
+                visit(ast.getInitialization());
+            }
+
+            // Visit and validate condition
+            if (ast.getCondition() != null) {
+                visit(ast.getCondition());
+                // Condition must be a boolean expression
+                if (!ast.getCondition().getType().equals(Environment.Type.BOOLEAN)) {
+                    throw new RuntimeException("FOR loop condition must be a boolean expression");
+                }
+            }
+
+            // Visit and validate increment if present
+            if (ast.getIncrement() != null) {
+                visit(ast.getIncrement());
+            }
+
+            // Validate that the body is not empty
+            if (ast.getStatements().isEmpty()) {
+                throw new RuntimeException("FOR loop cannot have an empty body");
+            }
+
+            // Visit all statements in the for loop body
+            ast.getStatements().forEach(this::visit);
+
+        } finally {
+            // Restore the parent scope
+            scope = parentScope;
+        }
+
+        return null;
     }
 
     public static void requireAssignable(Environment.Type target, Environment.Type type) {

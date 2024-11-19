@@ -125,6 +125,13 @@ public final class AnalyzerTests {
                             ast.setVariable(new Environment.Variable("name", "name", Environment.Type.INTEGER, false, Environment.NIL));
                         })
                 ),
+                Arguments.of("Decimal Declaration",
+                        // LET name: Decimal;
+                        new Ast.Statement.Declaration("name", Optional.of("Decimal"), Optional.empty()),
+                        init(new Ast.Statement.Declaration("name", Optional.of("Decimal"), Optional.empty()), ast -> {
+                            ast.setVariable(new Environment.Variable("name", "name", Environment.Type.DECIMAL, false, Environment.NIL));
+                        })
+                ),
                 Arguments.of("Initialization",
                         // LET name = 1;
                         new Ast.Statement.Declaration("name", Optional.empty(), Optional.of(new Ast.Expression.Literal(BigInteger.ONE))),
@@ -140,8 +147,16 @@ public final class AnalyzerTests {
                 Arguments.of("Unknown Type",
                         // LET name: Unknown;
                         new Ast.Statement.Declaration("name", Optional.of("Unknown"), Optional.empty()),
-                        null
+                        null // expected runtime exception
+                ),
+                Arguments.of("Integer Declaration with Initialization",
+                        // LET name: Integer = 1;
+                        new Ast.Statement.Declaration("name", Optional.of("Integer"), Optional.of(new Ast.Expression.Literal(BigInteger.ONE))),
+                        init(new Ast.Statement.Declaration("name", Optional.of("Integer"), Optional.of(
+                                init(new Ast.Expression.Literal(BigInteger.ONE), ast -> ast.setType(Environment.Type.INTEGER))
+                        )), ast -> ast.setVariable(new Environment.Variable("name", "name", Environment.Type.INTEGER, false, Environment.NIL)))
                 )
+
         );
     }
 
@@ -187,6 +202,88 @@ public final class AnalyzerTests {
                                 init(new Ast.Expression.Literal(BigInteger.ONE), ast -> ast.setType(Environment.Type.INTEGER))
                         )
                 )
+        );
+    }
+
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    public void testForStatement(String test, Ast.Statement.For ast, Ast.Statement.For expected) {
+        test(ast, expected, init(new Scope(null), scope -> {
+            scope.defineVariable("num", "num", Environment.Type.INTEGER, false, Environment.NIL);
+            scope.defineVariable("sum", "sum", Environment.Type.INTEGER, false, Environment.NIL);
+        }));
+    }
+
+    private static Stream<Arguments> testForStatement() {
+        return Stream.of(
+                Arguments.of("Valid For Loop",
+                        // FOR (num = 0; num < 5; num = num + 1) sum = sum + num; END
+                        new Ast.Statement.For(
+                                new Ast.Statement.Assignment(
+                                        new Ast.Expression.Access(Optional.empty(), "num"),
+                                        new Ast.Expression.Literal(BigInteger.ZERO)
+                                ),
+                                new Ast.Expression.Binary("<",
+                                        new Ast.Expression.Access(Optional.empty(), "num"),
+                                        new Ast.Expression.Literal(BigInteger.valueOf(5))
+                                ),
+                                new Ast.Statement.Assignment(
+                                        new Ast.Expression.Access(Optional.empty(), "num"),
+                                        new Ast.Expression.Binary("+",
+                                                new Ast.Expression.Access(Optional.empty(), "num"),
+                                                new Ast.Expression.Literal(BigInteger.ONE)
+                                        )
+                                ),
+                                Arrays.asList(
+                                        new Ast.Statement.Assignment(
+                                                new Ast.Expression.Access(Optional.empty(), "sum"),
+                                                new Ast.Expression.Binary("+",
+                                                        new Ast.Expression.Access(Optional.empty(), "sum"),
+                                                        new Ast.Expression.Access(Optional.empty(), "num")
+                                                )
+                                        )
+                                )
+                        ),
+                        // Expected AST after analysis
+                        new Ast.Statement.For(
+                                new Ast.Statement.Assignment(
+                                        init(new Ast.Expression.Access(Optional.empty(), "num"),
+                                                ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL))),
+                                        init(new Ast.Expression.Literal(BigInteger.ZERO),
+                                                ast -> ast.setType(Environment.Type.INTEGER))
+                                ),
+                                init(new Ast.Expression.Binary("<",
+                                        init(new Ast.Expression.Access(Optional.empty(), "num"),
+                                                ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL))),
+                                        init(new Ast.Expression.Literal(BigInteger.valueOf(5)),
+                                                ast -> ast.setType(Environment.Type.INTEGER))
+                                ), ast -> ast.setType(Environment.Type.BOOLEAN)),
+                                new Ast.Statement.Assignment(
+                                        init(new Ast.Expression.Access(Optional.empty(), "num"),
+                                                ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL))),
+                                        init(new Ast.Expression.Binary("+",
+                                                init(new Ast.Expression.Access(Optional.empty(), "num"),
+                                                        ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL))),
+                                                init(new Ast.Expression.Literal(BigInteger.ONE),
+                                                        ast -> ast.setType(Environment.Type.INTEGER))
+                                        ), ast -> ast.setType(Environment.Type.INTEGER))
+                                ),
+                                Arrays.asList(
+                                        new Ast.Statement.Assignment(
+                                                init(new Ast.Expression.Access(Optional.empty(), "sum"),
+                                                        ast -> ast.setVariable(new Environment.Variable("sum", "sum", Environment.Type.INTEGER, false, Environment.NIL))),
+                                                init(new Ast.Expression.Binary("+",
+                                                        init(new Ast.Expression.Access(Optional.empty(), "sum"),
+                                                                ast -> ast.setVariable(new Environment.Variable("sum", "sum", Environment.Type.INTEGER, false, Environment.NIL))),
+                                                        init(new Ast.Expression.Access(Optional.empty(), "num"),
+                                                                ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL)))
+                                                ), ast -> ast.setType(Environment.Type.INTEGER))
+                                        )
+                                )
+                        )
+                )
+                // You can add more test cases here for invalid conditions, empty statements, etc.
         );
     }
 
@@ -363,6 +460,18 @@ public final class AnalyzerTests {
                         init(new Ast.Expression.Access(Optional.of(
                                 init(new Ast.Expression.Access(Optional.empty(), "object"), ast -> ast.setVariable(new Environment.Variable("object", "object", OBJECT_TYPE, false, Environment.NIL)))
                         ), "field"), ast -> ast.setVariable(new Environment.Variable("field", "field", Environment.Type.INTEGER, false, Environment.NIL)))
+                ),
+                Arguments.of("Invalid Variable Access",
+                        // undefinedVar
+                        new Ast.Expression.Access(Optional.empty(), "undefinedVar"),
+                        null
+                ),
+                Arguments.of("Invalid Field Access",
+                        // plcObject.undefinedField
+                        new Ast.Expression.Access(Optional.of(
+                                new Ast.Expression.Access(Optional.empty(), "plcObject")
+                        ), "undefinedField"),
+                        null
                 )
         );
     }
