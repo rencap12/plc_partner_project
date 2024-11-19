@@ -128,13 +128,13 @@ public class LexerTests {
     }
 
 //    Character Reference:
-//    Line Feed: ␊, \n
-//    Carriage Return: ␍, \r
-//    Horizontal Tab: ␉, \t
-//    Backspace: ␈, \b
-//    Form Feed: ␌, \f
-//    Vertical Tab: ␋, \u000B
-//    Example: [ ␊␍␉], "[ \n\r\t]"
+//    Line Feed: , \n
+//    Carriage Return: , \r
+//    Horizontal Tab: , \t
+//    Backspace: , \b
+//    Form Feed: , \f
+//    Vertical Tab: , \u000B
+//    Example: [ ], "[ \n\r\t]"
     private static Stream<Arguments> testString() {
         return Stream.of(
                 Arguments.of("Empty", "\"\"", true),  // Test for empty string
@@ -143,7 +143,7 @@ public class LexerTests {
                 Arguments.of("Numeric", "\"123\"", true),  // Numeric string
                 Arguments.of("Symbols", "\"!@#$%^&*\"", true),  // String with symbols
                 Arguments.of("Unicode", "\"ρ★⚡\"", true),  // String with Unicode characters
-                Arguments.of("Whitespace", "\" ␈␉\"", true),  // String with whitespace
+                Arguments.of("Whitespace", "\" \"", true),  // String with whitespace
                 Arguments.of("Escape", "\"Hello, \\nWorld!\"", true),  // Newline escape
                 Arguments.of("Alphabetic Escapes", "\"a\\bcdefghijklm\\nopq\\rs\\tuvwxyz\"", true),  // Multiple escapes
                 Arguments.of("Special Escapes", "\"sq\\'dq\\\"bs\\\\\"", true),  // Escaping quotes and backslash

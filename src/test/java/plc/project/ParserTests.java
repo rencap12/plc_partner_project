@@ -67,7 +67,7 @@ final class ParserTests {
                 ),
                 Arguments.of("Field Method",
                         Arrays.asList(
-                                // LET name = expr;␊DEF name() DO stmt; END
+                                // LET name = expr; \n DEF name() DO stmt; END
                                 new Token(Token.Type.IDENTIFIER, "LET", 0),
                                 new Token(Token.Type.IDENTIFIER, "name", 4),
                                 new Token(Token.Type.OPERATOR, "=", 9),
@@ -91,7 +91,7 @@ final class ParserTests {
                 ),
                 Arguments.of("Method Field",
                         Arrays.asList(
-                                // DEF name() DO stmt; END␊LET name = expr;
+                                // DEF name() DO stmt; END \nLET name = expr;
                                 new Token(Token.Type.IDENTIFIER, "DEF", 0),
                                 new Token(Token.Type.IDENTIFIER, "name", 4),
                                 new Token(Token.Type.OPERATOR, "(", 8),
