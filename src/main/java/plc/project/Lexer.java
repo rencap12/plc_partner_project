@@ -41,9 +41,9 @@ public final class Lexer {
                 tokens.add(lexToken());
             }
         }
-//        for (Token token: tokens){
-//            System.out.println("token:" + token.toString());
-//        }
+        for (Token token: tokens){
+            System.out.println("token:" + token.toString());
+        }
 
         return tokens;
     }
@@ -57,17 +57,19 @@ public final class Lexer {
      * by {@link #lex()}
      */
     public Token lexToken() {
-        if (peek("!=") || peek(">=") || peek("<=") || peek("==") || peek("&&") || peek("||"))  {
+        if (peek("!=") || peek("==")) {
             return lexOperator(); // Handle this in lexOperator()
-        } else if (peek("[A-Za-z_]")) {
+        }  else if (peek("[A-Za-z_]")) {
             return lexIdentifier();
-        } else if (peek("[0-9]") || peek("-")) { // Include negative sign for numbers
+        } else if (peek("[0-9]") || peek("[-\\+]", "[0-9]")) { // Include negative sign for numbers
             return lexNumber();
+        } else if (peek("-")) { // Check if it's a hyphen for operator
+            return lexOperator(); // Treat hyphen as an operator
         } else if (peek("'")) {
             return lexCharacter();
         } else if (peek("\"")) {
             return lexString();
-        } else if (peek("[;!@#$%^&*|()=<>+/-]")) {
+        } else if (peek("[|,;!@#$%^&*()=<>+/-\\\\.]")) {
             return lexOperator(); // Handle single-character operators
         } else {
             throw new ParseException("Unknown token", chars.index);
@@ -75,36 +77,55 @@ public final class Lexer {
     }
 
     public Token lexIdentifier() {
+        // Ensure the identifier starts with a letter or underscore
         if (!peek("[A-Za-z_]")) {
             throw new ParseException("Invalid identifier start", chars.index);
         }
+
+        // Match valid identifier characters, including letters, digits, underscores
         while (match("[A-Za-z0-9_-]")) {
             // Keep matching valid identifier characters
         }
+
         return chars.emit(Token.Type.IDENTIFIER);
     }
 
-    public Token lexNumber() {
-        // Handle negative numbers
-        boolean isNegative = match("-");
 
-        // Capture the digits
+    public Token lexNumber() throws ParseException {
         StringBuilder number = new StringBuilder();
+        boolean hasDigits = false;
+
+        // Handle the optional '+' or '-' sign
+        if (peek("[-\\+]")) {
+            if (chars.get(chars.index) == '-') {
+                match("-");
+                number.append('-'); // Append the negative sign
+            } else if (peek("\\+")) {
+                match("\\+");
+            }
+        }
 
         // Check for leading zeros
         if (peek("0")) {
-            number.append(chars.get(0));
+            number.append('0');
             chars.advance();
 
-            // If there is another digit after the zero, it's invalid (leading zero case)
+            // No other digits allowed after a leading zero
             if (peek("\\d")) {
                 throw new ParseException("Invalid leading zero in number", chars.index);
             }
         } else {
             // Capture digits for numbers without leading zero
             while (peek("\\d")) {
+                hasDigits = true;  // At least one digit is present
                 number.append(chars.get(0));
                 chars.advance();
+            }
+
+            // If no digits were found, throw an error
+            if (!hasDigits) {
+                return lexOperator();
+               // throw new ParseException("No digits found in number", chars.index);
             }
         }
 
@@ -124,13 +145,34 @@ public final class Lexer {
                 chars.advance();
             }
 
-            // Emit a DECIMAL token, accounting for negativity
+            // Check if the number exceeds the integer precision of 9007199254740993
+            if (number.length() > 16 ||
+                    (number.length() == 16 && number.toString().compareTo("9007199254740993") > 0)) {
+                throw new ParseException("Number exceeds maximum integer precision: 9007199254740993", chars.index);
+            }
+
+            // Check for -0.0 case
+            if (number.toString().equals("-0.0")) {
+                throw new ParseException("Invalid number: -0.0 is not allowed", chars.index);
+            }
+
+            // Emit a DECIMAL token
             return chars.emit(Token.Type.DECIMAL);
         }
 
+        // Check if the number exceeds Integer.MAX_VALUE
+        String numberStr = number.toString();
+        if (numberStr.length() > 10 || // Integer.MAX_VALUE has 10 digits
+                (numberStr.length() == 10 && numberStr.compareTo(String.valueOf(Integer.MAX_VALUE)) > 0)) {
+            throw new ParseException("Number exceeds maximum integer value", chars.index);
+        }
+
         // Emit an INTEGER token if no decimal point was found
-        return chars.emit(isNegative ? Token.Type.INTEGER : Token.Type.INTEGER);
+        return chars.emit(Token.Type.INTEGER);
     }
+
+
+
 
     public Token lexCharacter() {
         // Ensure the character starts with a single quote
@@ -139,12 +181,16 @@ public final class Lexer {
         }
 
         // Check if the next character is a valid single character or an escape sequence
-        if (peek("[^'\\\\]")) {  // Match any character except ' or \
+        if (peek("^[^'\\\\]$") || peek("^\\s$")) {  // Match any character except ' or \
             chars.advance();  // Consume the character
         } else if (peek("\\\\")) {  // If it's a backslash, handle the escape sequence
             lexEscape();  // lexEscape() handles the escape sequence and throws an error if invalid
         } else {
             throw new ParseException("Invalid character literal", chars.index);
+        }
+
+        while(peek("[ \b\n\r\t]")){
+            chars.advance(); // skip over white space
         }
 
         // Ensure the character is terminated by a single quote
@@ -164,6 +210,8 @@ public final class Lexer {
         while (peek("[^\"\\\\]") || peek("\\\\")) {  // Match regular characters or escape sequences
             if (peek("\\\\")) {
                 lexEscape();  // Handle escape sequence
+            } else if (match("[\\n]")) {
+               throw new ParseException("Unterminated newline in string!", chars.index);
             } else {
                 chars.advance();
             }
@@ -171,6 +219,9 @@ public final class Lexer {
 
         if (!match("\"")) {
             throw new ParseException("String literal must end with a double quote", chars.index);
+        }
+        else {
+            match("\"");
         }
 
         return chars.emit(Token.Type.STRING);
@@ -186,69 +237,81 @@ public final class Lexer {
         }
     }
 
+
     public Token lexOperator() {
         // Check for multi-character operators first
+
+        if (match("-")) {
+            return chars.emit(Token.Type.OPERATOR); // Emit the hyphen as an operator
+        }
+
+        // Not equals (!=)
         if (peek("!")) {
             chars.advance(); // Consume '!'
             if (peek("=")) {
-                chars.advance(); // Consume '='}
-                return chars.emit(Token.Type.OPERATOR);
+                chars.advance(); // Consume '='
+                return chars.emit(Token.Type.OPERATOR); // '!='
             }
-            return chars.emit(Token.Type.OPERATOR); // bang!
+            return chars.emit(Token.Type.OPERATOR); // Just '!'
         }
 
-        if (peek(">")) {
-            chars.advance(); // Consume '!'
-            if (peek("=")) {
-                chars.advance(); // Consume '='}
-                return chars.emit(Token.Type.OPERATOR);
-            }
-            return chars.emit(Token.Type.OPERATOR); // bang!
-        }
-
-        if (peek("<")) {
-            chars.advance(); // Consume '!'
-            if (peek("=")) {
-                chars.advance(); // Consume '='}
-                return chars.emit(Token.Type.OPERATOR);
-            }
-            return chars.emit(Token.Type.OPERATOR); // bang!
-        }
-
+        // Equals (==)
         if (peek("=")) {
             chars.advance(); // Consume '='
-            if (peek("=")){
+            if (peek("=")) {
                 chars.advance(); // Consume '='
-                return chars.emit(Token.Type.OPERATOR);
+                return chars.emit(Token.Type.OPERATOR); // '=='
             }
-            return chars.emit(Token.Type.OPERATOR); // just =
+            return chars.emit(Token.Type.OPERATOR); // Just '='
         }
 
+        // Less than or equals (<=)
+        if (peek("<")) {
+            chars.advance(); // Consume '<'
+            if (peek("=")) {
+                chars.advance(); // Consume '='
+                return chars.emit(Token.Type.OPERATOR); // '<='
+            }
+            return chars.emit(Token.Type.OPERATOR); // Just '<'
+        }
+
+        // Greater than or equals (>=)
+        if (peek(">")) {
+            chars.advance(); // Consume '>'
+            if (peek("=")) {
+                chars.advance(); // Consume '='
+                return chars.emit(Token.Type.OPERATOR); // '>='
+            }
+            return chars.emit(Token.Type.OPERATOR); // Just '>'
+        }
+
+        // Logical AND (&&)
         if (peek("&")) {
-            chars.advance(); // Consume '='
-            if (peek("&")){
-                chars.advance(); // Consume '='
-                return chars.emit(Token.Type.OPERATOR);
+            chars.advance(); // Consume '&'
+            if (peek("&")) {
+                chars.advance(); // Consume '&'
+                return chars.emit(Token.Type.OPERATOR); // '&&'
             }
-            return chars.emit(Token.Type.OPERATOR); // just =
         }
 
-        if (peek("|")) {
-            chars.advance(); // Consume '='
-            if (peek("|")){
-                chars.advance(); // Consume '='
-                return chars.emit(Token.Type.OPERATOR);
+        // Logical OR (||)
+        if (peek("\\|")) {
+            chars.advance(); // Consume '|'
+            if (peek("\\|")) {
+                chars.advance(); // Consume '|'
+                return chars.emit(Token.Type.OPERATOR); // '||'
             }
-            return chars.emit(Token.Type.OPERATOR); // just =
         }
 
-        // Now check for single-character operators
-        if (match("[;!@#$%^&*|()+=\\-/]")) {
+        // Now check for single-character operators, including Unicode
+        // WORK ON UNICODE
+        if (match("[.,;!@#$%^&*()+=/<>\\-]")) {  // Added '<' and '>', and ensure unicode is properly checked
             return chars.emit(Token.Type.OPERATOR);
         }
 
         throw new ParseException("Invalid operator", chars.index);
     }
+
 
     /**
      * Returns true if the next sequence of characters match the given patterns,
@@ -319,6 +382,8 @@ public final class Lexer {
         public Token emit(Token.Type type) {
             int start = index - length;
             skip();
+//            Token token = new Token(type, input.substring(start, index), start);
+//            System.out.println("this is was emitted: " + token.toString() + ", " + token.getType());
             return new Token(type, input.substring(start, index), start);
         }
 
