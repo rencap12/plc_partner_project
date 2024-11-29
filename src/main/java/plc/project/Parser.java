@@ -262,7 +262,12 @@ public final class Parser {
             throw new ParseException("Expected ';'", tokens.index);
         }
 
-        return new Ast.Statement.Declaration(name, Optional.ofNullable(typeName), value);
+        if (typeName.isEmpty()) {
+            return new Ast.Statement.Declaration(name, value);
+        }
+
+        return new Ast.Statement.Declaration(name, Optional.of(typeName), value);
+
     }
 
     /**
