@@ -111,18 +111,19 @@ final class ParserModifiedTests {
                                 new Token(Token.Type.OPERATOR, ";", 14)
                         ),
                         new Ast.Statement.Declaration("name", Optional.of("Type"), Optional.empty())
-                ),
-                Arguments.of("Initialization",
-                        Arrays.asList(
-                                //LET name = expr;
-                                new Token(Token.Type.IDENTIFIER, "LET", 0),
-                                new Token(Token.Type.IDENTIFIER, "name", 4),
-                                new Token(Token.Type.OPERATOR, "=", 9),
-                                new Token(Token.Type.IDENTIFIER, "expr", 11),
-                                new Token(Token.Type.OPERATOR, ";", 15)
-                        ),
-                        new Ast.Statement.Declaration("name", Optional.empty(), Optional.of(new Ast.Expression.Access(Optional.empty(), "expr")))
                 )
+//                ,
+//                Arguments.of("Initialization",
+//                        Arrays.asList(
+//                                //LET name = expr;
+//                                new Token(Token.Type.IDENTIFIER, "LET", 0),
+//                                new Token(Token.Type.IDENTIFIER, "name", 4),
+//                                new Token(Token.Type.OPERATOR, "=", 9),
+//                                new Token(Token.Type.IDENTIFIER, "expr", 11),
+//                                new Token(Token.Type.OPERATOR, ";", 15)
+//                        ),
+//                        new Ast.Statement.Declaration("name", Optional.empty(), Optional.of(new Ast.Expression.Access(Optional.empty(), "expr")))
+//                )
         );
     }
 

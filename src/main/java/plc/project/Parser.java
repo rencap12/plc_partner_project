@@ -247,7 +247,9 @@ public final class Parser {
 
             // Type
             if (peek(Token.Type.IDENTIFIER)) {
+                typeName = tokens.get(0).getLiteral();
                 match(Token.Type.IDENTIFIER);
+
             }
         }
 
@@ -260,7 +262,7 @@ public final class Parser {
             throw new ParseException("Expected ';'", tokens.index);
         }
 
-        return new Ast.Statement.Declaration(name, value);
+        return new Ast.Statement.Declaration(name, Optional.ofNullable(typeName), value);
     }
 
     /**
