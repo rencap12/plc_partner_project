@@ -172,6 +172,20 @@ public final class Parser {
             parameters.add(tokens.get(0).getLiteral());
             match(Token.Type.IDENTIFIER);
 
+            if (peek(":")) {
+                match(":");
+
+                // Type
+                if (peek(Token.Type.IDENTIFIER)) {
+                    typeName = tokens.get(0).getLiteral();
+                    match(Token.Type.IDENTIFIER);
+                    parameterTypeNames.add(typeName);
+                } else {
+                    // ACCOUNT FOR MISSING TYPE EVEN THOUGH HAVE :
+                    throw new ParseException("No type included", tokens.index);
+                }
+            }
+
             if (peek(",")) {
                 match(",");
                 if (peek(")")) {
@@ -229,7 +243,7 @@ public final class Parser {
                 return new Ast.Method(name, parameters, statements);
             }
             //   public Method(String name, List<String> parameters, List<String> parameterTypeNames, Optional<String> returnTypeName, List<Statement> statements) {
-          //  return new Ast.Method(name, parameters, parameterTypeNames, typeName, statements);
+            return new Ast.Method(name, parameters, parameterTypeNames, Optional.of(typeName), statements);
         } else {
             if (tokens.has(0)) {
                 throw new ParseException("no END", tokens.index);
