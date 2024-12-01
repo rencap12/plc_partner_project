@@ -31,14 +31,33 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Source ast) {
-        for (Ast.Field field : ast.getFields()) {
-            visit(field);
+        // Generate the class declaration
+        print("public class Main {");
+        newline(0);
+
+        // Generate the static main method
+        newline(1);
+        print("public static void main(String[] args) {");
+        newline(2);
+        print("System.exit(new Main().main());");
+        newline(1);
+        print("}");
+
+        // Visit each method
+        for (int i = 0; i < ast.getMethods().size(); i++) {
             newline(0);
+            visit(ast.getMethods().get(i));
+            // Only add a newline if there are more methods after this one
+            if (i < ast.getMethods().size() - 1) {
+                newline(0);
+            }
         }
-        for (Ast.Method method : ast.getMethods()) {
-            visit(method);
-            newline(0);
-        }
+
+        // Close the class
+        newline(0);
+        newline(0);
+        print("}");
+
         return null;
     }
 
@@ -55,18 +74,30 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Method ast) {
-        print(ast.getReturnTypeName().orElse("void"), " ", ast.getName(), "(");
+        // Generate the method signature
+        newline(1);
+        print(ast.getReturnTypeName().orElse("void").equals("Integer") ? "int" : ast.getReturnTypeName().orElse("void"), " ", ast.getName(), "(");
+
+        // Parameters (if any)
         for (int i = 0; i < ast.getParameters().size(); i++) {
-            if (i > 0) print(", ");
+            if (i > 0) {
+                print(", ");
+            }
             print(ast.getParameterTypeNames().get(i), " ", ast.getParameters().get(i));
         }
         print(") {");
-        newline(++indent);
-        for (Ast.Statement statement : ast.getStatements()) {
-            visit(statement);
-            newline(indent);
+        newline(2);
+
+        for (int i = 0; i < ast.getStatements().size(); i++) {
+            visit(ast.getStatements().get(i));
+            // Only add a newline if there are more methods after this one
+            if (i < ast.getStatements().size() - 1) {
+                newline(2);
+            }
         }
-        newline(--indent);
+
+        // Close the method
+        newline(1);
         print("}");
         return null;
     }
