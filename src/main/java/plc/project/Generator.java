@@ -4,7 +4,7 @@ import java.util.List;
 import java.io.PrintWriter;
 
 public final class Generator implements Ast.Visitor<Void> {
-
+    //Something
     private final PrintWriter writer;
     private int indent = 0;
 
