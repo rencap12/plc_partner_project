@@ -2,6 +2,8 @@ package plc.project;
 
 import java.util.List;
 import java.io.PrintWriter;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 public final class Generator implements Ast.Visitor<Void> {
     //Something
@@ -33,6 +35,7 @@ public final class Generator implements Ast.Visitor<Void> {
     public Void visit(Ast.Source ast) {
         // Generate the class declaration
         print("public class Main {");
+        indent++;
         newline(0);
 
         // Generate the static main method
@@ -43,10 +46,21 @@ public final class Generator implements Ast.Visitor<Void> {
         newline(1);
         print("}");
 
+        //newline(0);
+        if (!ast.getFields().isEmpty()) {
+            newline(0);
+            for (int i = 0; i < ast.getFields().size(); i++) {
+                newline(indent);
+                print(ast.getFields().get(i));
+            }
+        }
+
+        newline(0);
+
         // Visit each method
         for (int i = 0; i < ast.getMethods().size(); i++) {
-            newline(0);
-            visit(ast.getMethods().get(i));
+           // newline(0);
+            print(ast.getMethods().get(i));
             // Only add a newline if there are more methods after this one
             if (i < ast.getMethods().size() - 1) {
                 newline(0);
@@ -63,42 +77,102 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Field ast) {
-        print(ast.getTypeName(), " ", ast.getName());
-        ast.getValue().ifPresent(value -> {
+//        print(ast.getTypeName(), " ", ast.getName());
+//        ast.getValue().ifPresent(value -> {
+//            print(" = ");
+//            visit(value);
+//        });
+//        print(";");
+//        return null;
+        // Print Java type name
+        if (ast.getTypeName().equals("Integer")) {
+            print("int");
+        }
+        else if (ast.getTypeName().equals("Decimal")) {
+          //  System.out.println("HERE DECIMAL");
+            print("double");
+        }
+        else if (ast.getTypeName().equals("Boolean")) {
+            print("boolean");
+        }
+        else if (ast.getTypeName().equals("Character")) {
+            print("char");
+        }
+        else if (ast.getTypeName().equals("String")) {
+            print("String");
+        }
+
+        print(" ");
+        print(ast.getName());
+        if (ast.getValue().isPresent()) {
             print(" = ");
-            visit(value);
-        });
+            print(ast.getValue().get());
+        }
         print(";");
+
         return null;
     }
 
     @Override
     public Void visit(Ast.Method ast) {
+//        // Generate the method signature
+//        newline(1);
+//        print(ast.getReturnTypeName().orElse("void").equals("Integer") ? "int" : ast.getReturnTypeName().orElse("void"), " ", ast.getName(), "(");
+//
+//        // Parameters (if any)
+//        for (int i = 0; i < ast.getParameters().size(); i++) {
+//            if (i > 0) {
+//                print(", ");
+//            }
+//            print(ast.getParameterTypeNames().get(i), " ", ast.getParameters().get(i));
+//        }
+//        print(") {");
+//        newline(2);
+//
+//        for (int i = 0; i < ast.getStatements().size(); i++) {
+//            visit(ast.getStatements().get(i));
+//            // Only add a newline if there are more methods after this one
+//            if (i < ast.getStatements().size() - 1) {
+//                newline(2);
+//            }
+//        }
+//
+//        // Close the method
+//        newline(1);
+//        print("}");
+//        return null;
+
+
         // Generate the method signature
         newline(1);
-        print(ast.getReturnTypeName().orElse("void").equals("Integer") ? "int" : ast.getReturnTypeName().orElse("void"), " ", ast.getName(), "(");
 
-        // Parameters (if any)
+        print(ast.getFunction().getReturnType().getJvmName());
+        print(" ");
+        print(ast.getName());
+        print("(");
         for (int i = 0; i < ast.getParameters().size(); i++) {
-            if (i > 0) {
+            print(ast.getParameterTypeNames().get(i));
+            print(" ");
+            print(ast.getParameters().get(i));
+            if (i != ast.getParameters().size() - 1) {
                 print(", ");
             }
-            print(ast.getParameterTypeNames().get(i), " ", ast.getParameters().get(i));
         }
         print(") {");
-        newline(2);
 
-        for (int i = 0; i < ast.getStatements().size(); i++) {
-            visit(ast.getStatements().get(i));
-            // Only add a newline if there are more methods after this one
-            if (i < ast.getStatements().size() - 1) {
-                newline(2);
+        if (!ast.getStatements().isEmpty()) {
+            indent++;
+            for (int i = 0; i < ast.getStatements().size(); i++) {
+                newline(indent);
+                print(ast.getStatements().get(i));
             }
+            indent--;
+            newline(indent);
         }
 
-        // Close the method
-        newline(1);
         print("}");
+
+
         return null;
     }
 
@@ -111,45 +185,55 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.Declaration ast) {
-        // Determine the correct type for printing
-        String typeName = ast.getTypeName().orElseGet(() -> {
-            // If there's a value, use its type to infer the primitive type
-            return ast.getValue()
-                    .map(value -> {
-                        // Map the type to its primitive equivalent
-                        if (value.getType() == Environment.Type.INTEGER) {
-                            return "int";      // Map to "int" for integers
-                        } else if (value.getType() == Environment.Type.DECIMAL) {
-                            return "double";   // Map to "double" for decimals
-                        } else if (value.getType() == Environment.Type.BOOLEAN) {
-                            return "boolean";  // Map to "boolean" for booleans
-                        } else if (value.getType() == Environment.Type.STRING) {
-                            return "String";   // Map to "String" for strings
-                        }
-                        return "var"; // Default if no match
-                    })
-                    .orElse("var"); // Fallback to "var" if no value is present
-        });
-
-        // If the type is one of the wrapped types, convert to the primitive equivalent
-        if (typeName.equals("Integer")) {
-            typeName = "int";  // Convert "Integer" to "int"
-        } else if (typeName.equals("Double")) {
-            typeName = "double";  // Convert "Double" to "double"
-        } else if (typeName.equals("Boolean")) {
-            typeName = "boolean";  // Convert "Boolean" to "boolean"
-        }
-
-        // Print the type and variable name
-        print(typeName, " ", ast.getName());
-
-        // If there is a value assigned, print it
-        ast.getValue().ifPresent(value -> {
+//        // Determine the correct type for printing
+//        String typeName = ast.getTypeName().orElseGet(() -> {
+//            // If there's a value, use its type to infer the primitive type
+//            return ast.getValue()
+//                    .map(value -> {
+//                        // Map the type to its primitive equivalent
+//                        if (value.getType() == Environment.Type.INTEGER) {
+//                            return "int";      // Map to "int" for integers
+//                        } else if (value.getType() == Environment.Type.DECIMAL) {
+//                            return "double";   // Map to "double" for decimals
+//                        } else if (value.getType() == Environment.Type.BOOLEAN) {
+//                            return "boolean";  // Map to "boolean" for booleans
+//                        } else if (value.getType() == Environment.Type.STRING) {
+//                            return "String";   // Map to "String" for strings
+//                        }
+//                        return "var"; // Default if no match
+//                    })
+//                    .orElse("var"); // Fallback to "var" if no value is present
+//        });
+//
+//        // If the type is one of the wrapped types, convert to the primitive equivalent
+//        if (typeName.equals("Integer")) {
+//            typeName = "int";  // Convert "Integer" to "int"
+//        } else if (typeName.equals("Double")) {
+//            typeName = "double";  // Convert "Double" to "double"
+//        } else if (typeName.equals("Boolean")) {
+//            typeName = "boolean";  // Convert "Boolean" to "boolean"
+//        }
+//
+//        // Print the type and variable name
+//        print(typeName, " ", ast.getName());
+//
+//        // If there is a value assigned, print it
+//        ast.getValue().ifPresent(value -> {
+//            print(" = ");
+//            visit(value);
+//        });
+//
+//        // End with a semicolon
+//        print(";");
+//
+//        return null;
+        print(ast.getVariable().getType().getJvmName());
+        print(" ");
+        print(ast.getVariable().getJvmName());
+        if (ast.getValue().isPresent()) {
             print(" = ");
-            visit(value);
-        });
-
-        // End with a semicolon
+            print(ast.getValue().get());
+        }
         print(";");
 
         return null;
@@ -303,7 +387,27 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.Literal ast) {
-        print(ast.getLiteral());
+        if (ast.getType() == Environment.Type.CHARACTER) {
+            print("'");
+            print(ast.getLiteral());
+            print("'");
+        }
+        else if (ast.getType() == Environment.Type.STRING) {
+           // print("\"");
+            print(ast.getLiteral());
+            //print("\"");
+        }
+        else if (ast.getType() == Environment.Type.DECIMAL) {
+            BigDecimal temp = BigDecimal.class.cast(ast.getLiteral());
+            print(temp.doubleValue());
+        }
+        else if (ast.getType() == Environment.Type.INTEGER) {
+            BigInteger temp = BigInteger.class.cast(ast.getLiteral());
+            print(temp.intValue());
+        }
+        else {
+            print(ast.getLiteral());
+        }
         return null;
     }
 
