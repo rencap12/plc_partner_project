@@ -47,6 +47,7 @@ public final class Generator implements Ast.Visitor<Void> {
         print("}");
 
         //newline(0);
+
         if (!ast.getFields().isEmpty()) {
             newline(0);
             for (int i = 0; i < ast.getFields().size(); i++) {
@@ -59,11 +60,14 @@ public final class Generator implements Ast.Visitor<Void> {
 
         // Visit each method
         for (int i = 0; i < ast.getMethods().size(); i++) {
-           // newline(0);
+            if (i == 0) {
+                newline(1);
+            }
             print(ast.getMethods().get(i));
             // Only add a newline if there are more methods after this one
             if (i < ast.getMethods().size() - 1) {
                 newline(0);
+                newline(1);
             }
         }
 
@@ -144,9 +148,13 @@ public final class Generator implements Ast.Visitor<Void> {
 
 
         // Generate the method signature
-        newline(1);
+       // newline(1);
 
-        print(ast.getFunction().getReturnType().getJvmName());
+        if (ast.getReturnTypeName().orElse("void") == "void") {
+            print(ast.getReturnTypeName().orElse("void"));
+        } else {
+            print(ast.getFunction().getReturnType().getJvmName());
+        }
         print(" ");
         print(ast.getName());
         print("(");
