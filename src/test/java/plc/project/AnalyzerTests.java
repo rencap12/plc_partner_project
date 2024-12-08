@@ -36,6 +36,52 @@ public final class AnalyzerTests {
     }
     private static Stream<Arguments> testSource() {
         return Stream.of(
+
+                // Field Use: LET num: Integer = 1; DEF main(): Integer DO print(num); END
+                // Fixed test that matches your Analyzer's expectations
+                // 1. Source test modifications - Fix Field Use and Method Use tests
+                Arguments.of("Field Use",
+                        new Ast.Source(
+                                Arrays.asList(
+                                        new Ast.Field("num", "Integer", false,
+                                                Optional.of(new Ast.Expression.Literal(BigInteger.ONE)))
+                                ),
+                                Arrays.asList(
+                                        new Ast.Method("main", Arrays.asList(), Arrays.asList(), Optional.of("Integer"),
+                                                Arrays.asList(
+                                                        new Ast.Statement.Expression(
+                                                                new Ast.Expression.Function(Optional.empty(), "print",
+                                                                        Arrays.asList(new Ast.Expression.Access(Optional.empty(), "num"))
+                                                                )
+                                                        )
+                                                )
+                                        )
+                                )
+                        ),
+                        init(new Ast.Source(
+                                Arrays.asList(
+                                        init(new Ast.Field("num", "Integer", false,
+                                                        Optional.of(init(new Ast.Expression.Literal(BigInteger.ONE),
+                                                                ast -> ast.setType(Environment.Type.INTEGER)))),
+                                                ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL)))
+                                ),
+                                Arrays.asList(
+                                        init(new Ast.Method("main", Arrays.asList(), Arrays.asList(), Optional.of("Integer"),
+                                                Arrays.asList(
+                                                        new Ast.Statement.Expression(
+                                                                init(new Ast.Expression.Function(Optional.empty(), "print",
+                                                                        Arrays.asList(
+                                                                                init(new Ast.Expression.Access(Optional.empty(), "num"),
+                                                                                        ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL)))
+                                                                        )
+                                                                ), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                                                        )
+                                                )
+                                        ), ast -> ast.setFunction(new Environment.Function("main", "main", Arrays.asList(), Environment.Type.INTEGER, args -> Environment.NIL)))
+                                )
+                        ), ast -> {})
+                ),
+
                 // LET value: Boolean = TRUE; DEF main(): Integer DO RETURN value; END
                 Arguments.of("Invalid Return",
                         new Ast.Source(
@@ -58,6 +104,344 @@ public final class AnalyzerTests {
                                         new Ast.Method("main", Arrays.asList(), Arrays.asList(), Optional.empty(), Arrays.asList(
                                             new Ast.Statement.Return(new Ast.Expression.Literal(new BigInteger("0"))))
                                         )
+                                )
+                        ),
+                        null
+                ),
+                // Valid Main: DEF main(): Integer DO END
+                Arguments.of("Valid Main",
+                        new Ast.Source(
+                                Arrays.asList(), // empty fields
+                                Arrays.asList(
+                                        new Ast.Method("main",
+                                                Arrays.asList(), // empty parameters
+                                                Arrays.asList(), // empty parameter types
+                                                Optional.of("Integer"),
+                                                Arrays.asList() // empty statements
+                                        )
+                                )
+                        ),
+                        init(new Ast.Source(
+                                Arrays.asList(),
+                                Arrays.asList(
+                                        init(new Ast.Method("main",
+                                                Arrays.asList(),
+                                                Arrays.asList(),
+                                                Optional.of("Integer"),
+                                                Arrays.asList()
+                                        ), ast -> ast.setFunction(new Environment.Function("main", "main", Arrays.asList(), Environment.Type.INTEGER, args -> Environment.NIL)))
+                                )
+                        ), ast -> {})
+                ),
+
+                // Method Use with String reverse
+                Arguments.of("Method Use",
+                        new Ast.Source(
+                                Arrays.asList(), // No fields
+                                Arrays.asList(
+                                        // First method: reverse
+                                        new Ast.Method("reverse",
+                                                Arrays.asList("s"),  // Parameter names
+                                                Arrays.asList("String"),  // Parameter types
+                                                Optional.of("String"), // Return type
+                                                Arrays.asList(
+                                                        new Ast.Statement.If(
+                                                                // Condition: s.length <= 1
+                                                                new Ast.Expression.Binary("<=",
+                                                                        new Ast.Expression.Access(
+                                                                                Optional.of(new Ast.Expression.Access(Optional.empty(), "s")),
+                                                                                "length"
+                                                                        ),
+                                                                        new Ast.Expression.Literal(BigInteger.ONE)
+                                                                ),
+                                                                // Then statements
+                                                                Arrays.asList(
+                                                                        new Ast.Statement.Return(
+                                                                                new Ast.Expression.Access(Optional.empty(), "s")
+                                                                        )
+                                                                ),
+                                                                Arrays.asList() // No else statements
+                                                        ),
+                                                        // Return statement
+                                                        new Ast.Statement.Return(
+                                                                new Ast.Expression.Binary("+",
+                                                                        new Ast.Expression.Function(
+                                                                                Optional.empty(),
+                                                                                "reverse",
+                                                                                Arrays.asList(
+                                                                                        new Ast.Expression.Function(
+                                                                                                Optional.of(new Ast.Expression.Access(Optional.empty(), "s")),
+                                                                                                "slice",
+                                                                                                Arrays.asList(
+                                                                                                        new Ast.Expression.Literal(BigInteger.ONE),
+                                                                                                        new Ast.Expression.Access(
+                                                                                                                Optional.of(new Ast.Expression.Access(Optional.empty(), "s")),
+                                                                                                                "length"
+                                                                                                        )
+                                                                                                )
+                                                                                        )
+                                                                                )
+                                                                        ),
+                                                                        new Ast.Expression.Function(
+                                                                                Optional.of(new Ast.Expression.Access(Optional.empty(), "s")),
+                                                                                "slice",
+                                                                                Arrays.asList(
+                                                                                        new Ast.Expression.Literal(BigInteger.ZERO),
+                                                                                        new Ast.Expression.Literal(BigInteger.ONE)
+                                                                                )
+                                                                        )
+                                                                )
+                                                        )
+                                                )
+                                        ),
+                                        // Second method: main
+                                        new Ast.Method("main",
+                                                Arrays.asList(),
+                                                Arrays.asList(),
+                                                Optional.of("Integer"),
+                                                Arrays.asList(
+                                                        new Ast.Statement.Expression(
+                                                                new Ast.Expression.Function(
+                                                                        Optional.empty(),
+                                                                        "print",
+                                                                        Arrays.asList(
+                                                                                new Ast.Expression.Function(
+                                                                                        Optional.empty(),
+                                                                                        "reverse",
+                                                                                        Arrays.asList(new Ast.Expression.Literal("Hello World"))
+                                                                                )
+                                                                        )
+                                                                )
+                                                        ),
+                                                        new Ast.Statement.Return(new Ast.Expression.Literal(BigInteger.ZERO))
+                                                )
+                                        )
+                                )
+                        ),
+                        init(new Ast.Source(
+                                Arrays.asList(),
+                                Arrays.asList(
+                                        // Initialize reverse method
+                                        init(new Ast.Method("reverse",
+                                                Arrays.asList("s"),
+                                                Arrays.asList("String"),
+                                                Optional.of("String"),
+                                                Arrays.asList(
+                                                        new Ast.Statement.If(
+                                                                init(new Ast.Expression.Binary("<=",
+                                                                        init(new Ast.Expression.Access(
+                                                                                Optional.of(init(new Ast.Expression.Access(Optional.empty(), "s"),
+                                                                                        ast -> ast.setVariable(new Environment.Variable("s", "s", Environment.Type.STRING, false, Environment.NIL)))),
+                                                                                "length"
+                                                                        ), ast -> ast.setVariable(new Environment.Variable("length", "length", Environment.Type.INTEGER, false, Environment.NIL))),
+                                                                        init(new Ast.Expression.Literal(BigInteger.ONE),
+                                                                                ast -> ast.setType(Environment.Type.INTEGER))
+                                                                ), ast -> ast.setType(Environment.Type.BOOLEAN)),
+                                                                Arrays.asList(
+                                                                        new Ast.Statement.Return(
+                                                                                init(new Ast.Expression.Access(Optional.empty(), "s"),
+                                                                                        ast -> ast.setVariable(new Environment.Variable("s", "s", Environment.Type.STRING, false, Environment.NIL)))
+                                                                        )
+                                                                ),
+                                                                Arrays.asList()
+                                                        ),
+                                                        new Ast.Statement.Return(
+                                                                init(new Ast.Expression.Binary("+",
+                                                                        init(new Ast.Expression.Function(
+                                                                                Optional.empty(),
+                                                                                "reverse",
+                                                                                Arrays.asList(
+                                                                                        init(new Ast.Expression.Function(
+                                                                                                Optional.of(init(new Ast.Expression.Access(Optional.empty(), "s"),
+                                                                                                        ast -> ast.setVariable(new Environment.Variable("s", "s", Environment.Type.STRING, false, Environment.NIL)))),
+                                                                                                "slice",
+                                                                                                Arrays.asList(
+                                                                                                        init(new Ast.Expression.Literal(BigInteger.ONE),
+                                                                                                                ast -> ast.setType(Environment.Type.INTEGER)),
+                                                                                                        init(new Ast.Expression.Access(
+                                                                                                                Optional.of(init(new Ast.Expression.Access(Optional.empty(), "s"),
+                                                                                                                        ast -> ast.setVariable(new Environment.Variable("s", "s", Environment.Type.STRING, false, Environment.NIL)))),
+                                                                                                                "length"
+                                                                                                        ), ast -> ast.setVariable(new Environment.Variable("length", "length", Environment.Type.INTEGER, false, Environment.NIL)))
+                                                                                                )
+                                                                                        ), ast -> ast.setFunction(new Environment.Function("slice", "slice", Arrays.asList(Environment.Type.INTEGER, Environment.Type.INTEGER), Environment.Type.STRING, args -> Environment.NIL)))
+                                                                                )
+                                                                        ), ast -> ast.setFunction(new Environment.Function("reverse", "reverse", Arrays.asList(Environment.Type.STRING), Environment.Type.STRING, args -> Environment.NIL))),
+                                                                        init(new Ast.Expression.Function(
+                                                                                Optional.of(init(new Ast.Expression.Access(Optional.empty(), "s"),
+                                                                                        ast -> ast.setVariable(new Environment.Variable("s", "s", Environment.Type.STRING, false, Environment.NIL)))),
+                                                                                "slice",
+                                                                                Arrays.asList(
+                                                                                        init(new Ast.Expression.Literal(BigInteger.ZERO),
+                                                                                                ast -> ast.setType(Environment.Type.INTEGER)),
+                                                                                        init(new Ast.Expression.Literal(BigInteger.ONE),
+                                                                                                ast -> ast.setType(Environment.Type.INTEGER))
+                                                                                )
+                                                                        ), ast -> ast.setFunction(new Environment.Function("slice", "slice", Arrays.asList(Environment.Type.INTEGER, Environment.Type.INTEGER), Environment.Type.STRING, args -> Environment.NIL)))
+                                                                ), ast -> ast.setType(Environment.Type.STRING))
+                                                        )
+                                                )
+                                        ), ast -> ast.setFunction(new Environment.Function("reverse", "reverse", Arrays.asList(Environment.Type.STRING), Environment.Type.STRING, args -> Environment.NIL))),
+                                        // Initialize main method
+                                        init(new Ast.Method("main",
+                                                Arrays.asList(),
+                                                Arrays.asList(),
+                                                Optional.of("Integer"),
+                                                Arrays.asList(
+                                                        new Ast.Statement.Expression(
+                                                                init(new Ast.Expression.Function(
+                                                                        Optional.empty(),
+                                                                        "print",
+                                                                        Arrays.asList(
+                                                                                init(new Ast.Expression.Function(
+                                                                                        Optional.empty(),
+                                                                                        "reverse",
+                                                                                        Arrays.asList(init(new Ast.Expression.Literal("Hello World"),
+                                                                                                ast -> ast.setType(Environment.Type.STRING)))
+                                                                                ), ast -> ast.setFunction(new Environment.Function("reverse", "reverse", Arrays.asList(Environment.Type.STRING), Environment.Type.STRING, args -> Environment.NIL)))
+                                                                        )
+                                                                ), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                                                        ),
+                                                        new Ast.Statement.Return(init(new Ast.Expression.Literal(BigInteger.ZERO),
+                                                                ast -> ast.setType(Environment.Type.INTEGER)))
+                                                )
+                                        ), ast -> ast.setFunction(new Environment.Function("main", "main", Arrays.asList(), Environment.Type.INTEGER, args -> Environment.NIL)))
+                                )
+                        ), ast -> {})
+                ),
+
+                // Invalid Main Return Type: DEF main() DO print("Hello, World!"); END
+                Arguments.of("Invalid Main Return Type",
+                        new Ast.Source(
+                                Arrays.asList(),
+                                Arrays.asList(
+                                        new Ast.Method("main",
+                                                Arrays.asList(),
+                                                Arrays.asList(),
+                                                Optional.empty(), // Missing return type
+                                                Arrays.asList(
+                                                        new Ast.Statement.Expression(
+                                                                new Ast.Expression.Function(
+                                                                        Optional.empty(),
+                                                                        "print",
+                                                                        Arrays.asList(new Ast.Expression.Literal("Hello, World!"))
+                                                                )
+                                                        )
+                                                )
+                                        )
+                                )
+                        ),
+                        null
+                ),
+
+                // Invalid Main Signature: DEF main(arg: Integer): Integer DO END
+                Arguments.of("Invalid Main Signature",
+                        new Ast.Source(
+                                Arrays.asList(),
+                                Arrays.asList(
+                                        new Ast.Method("main",
+                                                Arrays.asList("arg"),
+                                                Arrays.asList("Integer"),
+                                                Optional.of("Integer"),
+                                                Arrays.asList()
+                                        )
+                                )
+                        ),
+                        null
+                ),
+
+                // Missing Main: empty source
+                Arguments.of("Missing Main",
+                        new Ast.Source(Arrays.asList(), Arrays.asList()),
+                        null
+                ),
+
+                // FIELD TEST CASES
+                // Add these cases to your testSource() Stream.of()
+                Arguments.of("Declaration",
+                        new Ast.Source(
+                                Arrays.asList(
+                                        new Ast.Field("name", "Decimal", false, Optional.empty())
+                                ),
+                                Arrays.asList(
+                                        new Ast.Method("main", Arrays.asList(), Arrays.asList(), Optional.of("Integer"), Arrays.asList(
+                                                new Ast.Statement.Return(new Ast.Expression.Literal(BigInteger.ZERO))
+                                        ))
+                                )
+                        ),
+                        init(new Ast.Source(
+                                Arrays.asList(
+                                        init(new Ast.Field("name", "Decimal", false, Optional.empty()),
+                                                ast -> ast.setVariable(new Environment.Variable("name", "name", Environment.Type.DECIMAL, false, Environment.NIL)))
+                                ),
+                                Arrays.asList(
+                                        init(new Ast.Method("main", Arrays.asList(), Arrays.asList(), Optional.of("Integer"), Arrays.asList(
+                                                new Ast.Statement.Return(init(new Ast.Expression.Literal(BigInteger.ZERO),
+                                                        ast -> ast.setType(Environment.Type.INTEGER)))
+                                        )), ast -> ast.setFunction(new Environment.Function("main", "main", Arrays.asList(), Environment.Type.INTEGER, args -> Environment.NIL)))
+                                )
+                        ), ast -> {})
+                ),
+
+                Arguments.of("Field Initialization",
+                        new Ast.Field("name", "Integer", false,
+                                Optional.of(new Ast.Expression.Literal(BigInteger.ONE))),
+                        init(new Ast.Field("name", "Integer", false,
+                                        Optional.of(init(new Ast.Expression.Literal(BigInteger.ONE),
+                                                ast -> ast.setType(Environment.Type.INTEGER)))),
+                                ast -> ast.setVariable(new Environment.Variable("name", "name", Environment.Type.INTEGER, false, Environment.NIL)))
+
+                ),
+
+                Arguments.of("Invalid Field Initialization",
+                        new Ast.Source(
+                                Arrays.asList(
+                                        new Ast.Field("name", "Integer", false,
+                                                Optional.of(new Ast.Expression.Literal("I love COP4020!")))
+                                ),
+                                Arrays.asList(
+                                        new Ast.Method("main", Arrays.asList(), Arrays.asList(), Optional.of("Integer"), Arrays.asList(
+                                                new Ast.Statement.Return(new Ast.Expression.Literal(BigInteger.ZERO))
+                                        ))
+                                )
+                        ),
+                        null
+                ),
+
+                Arguments.of("Constant With Type",
+                        new Ast.Field("name", "Decimal", true,
+                                Optional.of(new Ast.Expression.Literal(new BigDecimal("1.0")))),
+                        init(new Ast.Field("name", "Decimal", true,
+                                        Optional.of(init(new Ast.Expression.Literal(new BigDecimal("1.0")),
+                                                ast -> ast.setType(Environment.Type.DECIMAL)))),
+                                ast -> ast.setVariable(new Environment.Variable("name", "name", Environment.Type.DECIMAL, true, Environment.NIL)))
+
+                ),
+
+                Arguments.of("Invalid Constant",
+                        new Ast.Source(
+                                Arrays.asList(
+                                        new Ast.Field("name", "Integer", true,
+                                                Optional.of(new Ast.Expression.Literal('n')))
+                                ),
+                                Arrays.asList(
+                                        new Ast.Method("main", Arrays.asList(), Arrays.asList(), Optional.of("Integer"), Arrays.asList(
+                                                new Ast.Statement.Return(new Ast.Expression.Literal(BigInteger.ZERO))
+                                        ))
+                                )
+                        ),
+                        null
+                ),
+
+                Arguments.of("Unknown Type",
+                        new Ast.Source(
+                                Arrays.asList(
+                                        new Ast.Field("name", "Unknown", false, Optional.empty())
+                                ),
+                                Arrays.asList(
+                                        new Ast.Method("main", Arrays.asList(), Arrays.asList(), Optional.of("Integer"), Arrays.asList(
+                                                new Ast.Statement.Return(new Ast.Expression.Literal(BigInteger.ZERO))
+                                        ))
                                 )
                         ),
                         null
@@ -104,6 +488,181 @@ public final class AnalyzerTests {
                                 ))
                         )),
                         null
+                ),
+                Arguments.of("No Explicit Return Type",
+                        new Ast.Method("func", Arrays.asList(), Arrays.asList(), Optional.empty(),
+                                Arrays.asList()
+                        ),
+                        null
+                ),
+
+                Arguments.of("Valid Return",
+                        new Ast.Method("func", Arrays.asList(), Arrays.asList(), Optional.of("Integer"),
+                                Arrays.asList(
+                                        new Ast.Statement.Return(new Ast.Expression.Literal(BigInteger.ZERO))
+                                )
+                        ),
+                        init(new Ast.Method("func", Arrays.asList(), Arrays.asList(), Optional.of("Integer"),
+                                Arrays.asList(
+                                        new Ast.Statement.Return(init(new Ast.Expression.Literal(BigInteger.ZERO),
+                                                ast -> ast.setType(Environment.Type.INTEGER)))
+                                )
+                        ), ast -> ast.setFunction(new Environment.Function("func", "func", Arrays.asList(), Environment.Type.INTEGER, args -> Environment.NIL)))
+                ),
+
+                Arguments.of("Invalid Return",
+                        new Ast.Method("func", Arrays.asList(), Arrays.asList(), Optional.of("Integer"),
+                                Arrays.asList(
+                                        new Ast.Statement.Return(new Ast.Expression.Literal(new BigDecimal("0.0")))
+                                )
+                        ),
+                        null
+                ),
+
+                // 3. Method test modifications - Fix parameter handling
+                Arguments.of("Valid Parameter Use",
+                        new Ast.Method("func", Arrays.asList("x"), Arrays.asList("Integer"), Optional.empty(),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(
+                                                new Ast.Expression.Function(Optional.empty(), "print",
+                                                        Arrays.asList(
+                                                                new Ast.Expression.Binary("+",
+                                                                        new Ast.Expression.Access(Optional.empty(), "x"),
+                                                                        new Ast.Expression.Literal(BigInteger.ONE)
+                                                                )
+                                                        )
+                                                )
+                                        )
+                                )
+                        ),
+                        init(new Ast.Method("func", Arrays.asList("x"), Arrays.asList("Integer"), Optional.empty(),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(
+                                                init(new Ast.Expression.Function(Optional.empty(), "print",
+                                                        Arrays.asList(
+                                                                init(new Ast.Expression.Binary("+",
+                                                                        init(new Ast.Expression.Access(Optional.empty(), "x"),
+                                                                                ast -> ast.setVariable(new Environment.Variable("x", "x", Environment.Type.INTEGER, false, Environment.NIL))),  // Changed to constant=false
+                                                                        init(new Ast.Expression.Literal(BigInteger.ONE),
+                                                                                ast -> ast.setType(Environment.Type.INTEGER))
+                                                                ), ast -> ast.setType(Environment.Type.INTEGER))
+                                                        )
+                                                ), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                                        )
+                                )
+                        ), ast -> ast.setFunction(new Environment.Function("func", "func", Arrays.asList(Environment.Type.INTEGER), Environment.Type.NIL, args -> Environment.NIL)))
+                ),
+
+                Arguments.of("Mutable Field Declaration",
+                        new Ast.Field("name", "Decimal", false, Optional.empty()),
+                        init(new Ast.Field("name", "Decimal", false, Optional.empty()),
+                                ast -> ast.setVariable(new Environment.Variable("name", "name", Environment.Type.DECIMAL, false, Environment.NIL))
+                        )
+                ),
+
+                Arguments.of("Multi Parameter Use",
+                        new Ast.Method("func",
+                                Arrays.asList("x", "y", "z"),
+                                Arrays.asList("Integer", "Integer", "Integer"),
+                                Optional.empty(),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(
+                                                new Ast.Expression.Function(Optional.empty(), "print",
+                                                        Arrays.asList(
+                                                                new Ast.Expression.Binary("+",
+                                                                        new Ast.Expression.Binary("+",
+                                                                                new Ast.Expression.Access(Optional.empty(), "x"),
+                                                                                new Ast.Expression.Access(Optional.empty(), "y")
+                                                                        ),
+                                                                        new Ast.Expression.Access(Optional.empty(), "z")
+                                                                )
+                                                        )
+                                                )
+                                        )
+                                )
+                        ),
+                        init(new Ast.Method("func",
+                                Arrays.asList("x", "y", "z"),
+                                Arrays.asList("Integer", "Integer", "Integer"),
+                                Optional.empty(),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(
+                                                init(new Ast.Expression.Function(Optional.empty(), "print",
+                                                        Arrays.asList(
+                                                                init(new Ast.Expression.Binary("+",
+                                                                        init(new Ast.Expression.Binary("+",
+                                                                                init(new Ast.Expression.Access(Optional.empty(), "x"),
+                                                                                        ast -> ast.setVariable(new Environment.Variable("x", "x", Environment.Type.INTEGER, false, Environment.NIL))),
+                                                                                init(new Ast.Expression.Access(Optional.empty(), "y"),
+                                                                                        ast -> ast.setVariable(new Environment.Variable("y", "y", Environment.Type.INTEGER, false, Environment.NIL)))
+                                                                        ), ast -> ast.setType(Environment.Type.INTEGER)),
+                                                                        init(new Ast.Expression.Access(Optional.empty(), "z"),
+                                                                                ast -> ast.setVariable(new Environment.Variable("z", "z", Environment.Type.INTEGER, false, Environment.NIL)))
+                                                                ), ast -> ast.setType(Environment.Type.INTEGER))
+                                                        )
+                                                ), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                                        )
+                                )
+                        ), ast -> ast.setFunction(new Environment.Function("func", "func",
+                                Arrays.asList(Environment.Type.INTEGER, Environment.Type.INTEGER, Environment.Type.INTEGER),
+                                Environment.Type.NIL, args -> Environment.NIL)))
+                ),
+
+                Arguments.of("Invalid Parameter Use",
+                        new Ast.Method("func", Arrays.asList("x"), Arrays.asList("Integer"), Optional.empty(),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(
+                                                new Ast.Expression.Function(Optional.empty(), "print",
+                                                        Arrays.asList(
+                                                                new Ast.Expression.Binary("+",
+                                                                        new Ast.Expression.Access(Optional.empty(), "x"),
+                                                                        new Ast.Expression.Literal(new BigDecimal("1.0"))
+                                                                )
+                                                        )
+                                                )
+                                        )
+                                )
+                        ),
+                        null
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    public void testExpressionStatement(String test, Ast.Statement.Expression ast, Ast.Statement.Expression expected) {
+        test(ast, expected, new Scope(null));
+    }
+
+    private static Stream<Arguments> testExpressionStatement() {
+        return Stream.of(
+                Arguments.of("Function",
+                        // print(1);
+                        new Ast.Statement.Expression(
+                                new Ast.Expression.Function(Optional.empty(), "print",
+                                        Arrays.asList(new Ast.Expression.Literal(BigInteger.ONE))
+                                )
+                        ),
+                        new Ast.Statement.Expression(
+                                init(new Ast.Expression.Function(Optional.empty(), "print",
+                                        Arrays.asList(init(new Ast.Expression.Literal(BigInteger.ONE),
+                                                ast -> ast.setType(Environment.Type.INTEGER)))
+                                ), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                        )
+                ),
+                Arguments.of("Literal",
+                        // 1;
+                        new Ast.Statement.Expression(new Ast.Expression.Literal(BigInteger.ONE)),
+                        null  // Should fail as statements must be function calls
+                ),
+                Arguments.of("Binary",
+                        // TRUE || FALSE;
+                        new Ast.Statement.Expression(
+                                new Ast.Expression.Binary("||",
+                                        new Ast.Expression.Literal(true),
+                                        new Ast.Expression.Literal(false))
+                        ),
+                        null  // Should fail as statements must be function calls
                 )
         );
     }
@@ -155,6 +714,27 @@ public final class AnalyzerTests {
                         init(new Ast.Statement.Declaration("name", Optional.of("Integer"), Optional.of(
                                 init(new Ast.Expression.Literal(BigInteger.ONE), ast -> ast.setType(Environment.Type.INTEGER))
                         )), ast -> ast.setVariable(new Environment.Variable("name", "name", Environment.Type.INTEGER, false, Environment.NIL)))
+                ),
+                // Add these cases to your existing testDeclarationStatement()
+                Arguments.of("Recursive Reference",
+                        // LET name: Integer = name;
+                        new Ast.Statement.Declaration("name", Optional.of("Integer"),
+                                Optional.of(new Ast.Expression.Access(Optional.empty(), "name"))
+                        ),
+                        null  // Should fail as variable cannot reference itself in declaration
+                ),
+                Arguments.of("Invalid Type",
+                        // LET name: Integer = 1.0;
+                        new Ast.Statement.Declaration("name", Optional.of("Integer"),
+                                Optional.of(new Ast.Expression.Literal(new BigDecimal("1.0")))
+                        ),
+                        null
+                ),
+                Arguments.of("Shadow Declaration",
+                        new Ast.Statement.Declaration("name", Optional.of("Integer"), Optional.empty()),
+                        init(new Ast.Statement.Declaration("name", Optional.of("Integer"), Optional.empty()),
+                                ast -> ast.setVariable(new Environment.Variable("name", "name", Environment.Type.INTEGER, false, Environment.NIL))
+                        )
                 )
 
         );
@@ -201,7 +781,32 @@ public final class AnalyzerTests {
                                 ), "field"), ast -> ast.setVariable(new Environment.Variable("field", "field", Environment.Type.INTEGER, false, Environment.NIL))),
                                 init(new Ast.Expression.Literal(BigInteger.ONE), ast -> ast.setType(Environment.Type.INTEGER))
                         )
+                ),
+                // Add these to your existing testAssignmentStatement()
+                Arguments.of("Redefining Constant Field",
+                        // zero = 1; where zero is constant
+                        new Ast.Statement.Assignment(
+                                new Ast.Expression.Access(Optional.empty(), "zero"),
+                                new Ast.Expression.Literal(BigInteger.ONE)
+                        ),
+                        null  // Should fail as cannot assign to constant
+                ),
+                Arguments.of("Object Field Assignment",
+                        // object.integer = 7;
+                        new Ast.Statement.Assignment(
+                                new Ast.Expression.Access(Optional.of(new Ast.Expression.Access(Optional.empty(), "object")), "integer"),
+                                new Ast.Expression.Literal(BigInteger.valueOf(7))
+                        ),
+                        new Ast.Statement.Assignment(
+                                init(new Ast.Expression.Access(Optional.of(
+                                        init(new Ast.Expression.Access(Optional.empty(), "object"),
+                                                ast -> ast.setVariable(new Environment.Variable("object", "object", OBJECT_TYPE, false, Environment.NIL)))
+                                ), "integer"), ast -> ast.setVariable(new Environment.Variable("integer", "integer", Environment.Type.INTEGER, false, Environment.NIL))),
+                                init(new Ast.Expression.Literal(BigInteger.valueOf(7)),
+                                        ast -> ast.setType(Environment.Type.INTEGER))
+                        )
                 )
+
         );
     }
 
@@ -282,8 +887,262 @@ public final class AnalyzerTests {
                                         )
                                 )
                         )
-                )
+                ),
                 // You can add more test cases here for invalid conditions, empty statements, etc.
+                Arguments.of("Basic For Loop",
+                        new Ast.Statement.For(
+                                // initialization: num = 0
+                                new Ast.Statement.Assignment(
+                                        new Ast.Expression.Access(Optional.empty(), "num"),
+                                        new Ast.Expression.Literal(BigInteger.ZERO)
+                                ),
+                                // condition: num < 5
+                                new Ast.Expression.Binary("<",
+                                        new Ast.Expression.Access(Optional.empty(), "num"),
+                                        new Ast.Expression.Literal(BigInteger.valueOf(5))
+                                ),
+                                // increment: num = num + 1
+                                new Ast.Statement.Assignment(
+                                        new Ast.Expression.Access(Optional.empty(), "num"),
+                                        new Ast.Expression.Binary("+",
+                                                new Ast.Expression.Access(Optional.empty(), "num"),
+                                                new Ast.Expression.Literal(BigInteger.ONE)
+                                        )
+                                ),
+                                // statement: sum = sum + num
+                                Arrays.asList(
+                                        new Ast.Statement.Assignment(
+                                                new Ast.Expression.Access(Optional.empty(), "sum"),
+                                                new Ast.Expression.Binary("+",
+                                                        new Ast.Expression.Access(Optional.empty(), "sum"),
+                                                        new Ast.Expression.Access(Optional.empty(), "num")
+                                                )
+                                        )
+                                )
+                        ),
+                        // Expected AST after analysis
+                        init(new Ast.Statement.For(
+                                // initialization with types set
+                                new Ast.Statement.Assignment(
+                                        init(new Ast.Expression.Access(Optional.empty(), "num"),
+                                                ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL))),
+                                        init(new Ast.Expression.Literal(BigInteger.ZERO),
+                                                ast -> ast.setType(Environment.Type.INTEGER))
+                                ),
+                                // condition with types set
+                                init(new Ast.Expression.Binary("<",
+                                        init(new Ast.Expression.Access(Optional.empty(), "num"),
+                                                ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL))),
+                                        init(new Ast.Expression.Literal(BigInteger.valueOf(5)),
+                                                ast -> ast.setType(Environment.Type.INTEGER))
+                                ), ast -> ast.setType(Environment.Type.BOOLEAN)),
+                                // increment with types set
+                                new Ast.Statement.Assignment(
+                                        init(new Ast.Expression.Access(Optional.empty(), "num"),
+                                                ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL))),
+                                        init(new Ast.Expression.Binary("+",
+                                                init(new Ast.Expression.Access(Optional.empty(), "num"),
+                                                        ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL))),
+                                                init(new Ast.Expression.Literal(BigInteger.ONE),
+                                                        ast -> ast.setType(Environment.Type.INTEGER))
+                                        ), ast -> ast.setType(Environment.Type.INTEGER))
+                                ),
+                                Arrays.asList(
+                                        new Ast.Statement.Assignment(
+                                                init(new Ast.Expression.Access(Optional.empty(), "sum"),
+                                                        ast -> ast.setVariable(new Environment.Variable("sum", "sum", Environment.Type.INTEGER, false, Environment.NIL))),
+                                                init(new Ast.Expression.Binary("+",
+                                                        init(new Ast.Expression.Access(Optional.empty(), "sum"),
+                                                                ast -> ast.setVariable(new Environment.Variable("sum", "sum", Environment.Type.INTEGER, false, Environment.NIL))),
+                                                        init(new Ast.Expression.Access(Optional.empty(), "num"),
+                                                                ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL)))
+                                                ), ast -> ast.setType(Environment.Type.INTEGER))
+                                        )
+                                )
+                        ), ast -> {})
+                ),
+
+                Arguments.of("Invalid Condition",
+                        new Ast.Statement.For(
+                                null,
+                                new Ast.Expression.Binary("+",
+                                        new Ast.Expression.Access(Optional.empty(), "num"),
+                                        new Ast.Expression.Literal(BigInteger.valueOf(5))
+                                ),
+                                null,
+                                Arrays.asList(
+                                        new Ast.Statement.Assignment(
+                                                new Ast.Expression.Access(Optional.empty(), "sum"),
+                                                new Ast.Expression.Binary("+",
+                                                        new Ast.Expression.Access(Optional.empty(), "sum"),
+                                                        new Ast.Expression.Access(Optional.empty(), "num")
+                                                )
+                                        )
+                                )
+                        ),
+                        null  // Should fail as condition must be boolean
+                ),
+
+                Arguments.of("Condition Only",
+                        new Ast.Statement.For(
+                                null,
+                                new Ast.Expression.Binary("<",
+                                        new Ast.Expression.Access(Optional.empty(), "num"),
+                                        new Ast.Expression.Literal(BigInteger.valueOf(5))
+                                ),
+                                null,
+                                Arrays.asList(
+                                        new Ast.Statement.Assignment(
+                                                new Ast.Expression.Access(Optional.empty(), "sum"),
+                                                new Ast.Expression.Binary("+",
+                                                        new Ast.Expression.Access(Optional.empty(), "sum"),
+                                                        new Ast.Expression.Access(Optional.empty(), "num")
+                                                )
+                                        )
+                                )
+                        ),
+                        // Include expected AST with proper type initialization
+                        null  // Set to proper AST if this should be valid
+                ),
+
+                Arguments.of("No Initialization",
+                        new Ast.Statement.For(
+                                null,
+                                new Ast.Expression.Binary("<",
+                                        new Ast.Expression.Access(Optional.empty(), "num"),
+                                        new Ast.Expression.Literal(BigInteger.valueOf(5))
+                                ),
+                                new Ast.Statement.Assignment(
+                                        new Ast.Expression.Access(Optional.empty(), "num"),
+                                        new Ast.Expression.Binary("+",
+                                                new Ast.Expression.Access(Optional.empty(), "num"),
+                                                new Ast.Expression.Literal(BigInteger.ONE)
+                                        )
+                                ),
+                                Arrays.asList(
+                                        new Ast.Statement.Assignment(
+                                                new Ast.Expression.Access(Optional.empty(), "sum"),
+                                                new Ast.Expression.Binary("+",
+                                                        new Ast.Expression.Access(Optional.empty(), "sum"),
+                                                        new Ast.Expression.Access(Optional.empty(), "num")
+                                                )
+                                        )
+                                )
+                        ),
+                        null  // Set to proper AST if this should be valid
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    void testWhileStatement(String test, Ast.Statement.While ast, Ast.Statement.While expected) {
+        test(ast, expected, new Scope(null));
+    }
+
+    private static Stream<Arguments> testWhileStatement() {
+        return Stream.of(
+                Arguments.of("Valid Condition",
+                        new Ast.Statement.While(
+                                new Ast.Expression.Literal(true),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(
+                                                new Ast.Expression.Function(Optional.empty(), "print",
+                                                        Arrays.asList(new Ast.Expression.Literal(BigInteger.ONE)))
+                                        )
+                                )
+                        ),
+                        init(new Ast.Statement.While(
+                                init(new Ast.Expression.Literal(true),
+                                        ast -> ast.setType(Environment.Type.BOOLEAN)),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(
+                                                init(new Ast.Expression.Function(Optional.empty(), "print",
+                                                        Arrays.asList(init(new Ast.Expression.Literal(BigInteger.ONE),
+                                                                ast -> ast.setType(Environment.Type.INTEGER)))
+                                                ), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                                        )
+                                )
+                        ), ast -> {})
+                ),
+
+                Arguments.of("Invalid Condition",
+                        new Ast.Statement.While(
+                                new Ast.Expression.Literal(BigInteger.ZERO),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(
+                                                new Ast.Expression.Function(Optional.empty(), "print",
+                                                        Arrays.asList(new Ast.Expression.Literal(BigInteger.ONE)))
+                                        )
+                                )
+                        ),
+                        null
+                ),
+
+                Arguments.of("Empty Statements",
+                        new Ast.Statement.While(
+                                new Ast.Expression.Literal(true),
+                                Arrays.asList()
+                        ),
+                        null
+                ),
+
+                Arguments.of("Invalid Statement",
+                        new Ast.Statement.While(
+                                new Ast.Expression.Literal(true),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(
+                                                new Ast.Expression.Function(Optional.empty(), "print",
+                                                        Arrays.asList(new Ast.Expression.Literal(BigInteger.valueOf(Long.MAX_VALUE))))
+                                        )
+                                )
+                        ),
+                        null
+                ),
+
+                Arguments.of("Multiple Statements",
+                        new Ast.Statement.While(
+                                new Ast.Expression.Literal(true),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(
+                                                new Ast.Expression.Function(Optional.empty(), "print",
+                                                        Arrays.asList(new Ast.Expression.Literal(BigInteger.ONE)))
+                                        ),
+                                        new Ast.Statement.Expression(
+                                                new Ast.Expression.Function(Optional.empty(), "print",
+                                                        Arrays.asList(new Ast.Expression.Literal(BigInteger.valueOf(2))))
+                                        ),
+                                        new Ast.Statement.Expression(
+                                                new Ast.Expression.Function(Optional.empty(), "print",
+                                                        Arrays.asList(new Ast.Expression.Literal(BigInteger.valueOf(3))))
+                                        )
+                                )
+                        ),
+                        init(new Ast.Statement.While(
+                                init(new Ast.Expression.Literal(true),
+                                        ast -> ast.setType(Environment.Type.BOOLEAN)),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(
+                                                init(new Ast.Expression.Function(Optional.empty(), "print",
+                                                        Arrays.asList(init(new Ast.Expression.Literal(BigInteger.ONE),
+                                                                ast -> ast.setType(Environment.Type.INTEGER)))
+                                                ), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                                        ),
+                                        new Ast.Statement.Expression(
+                                                init(new Ast.Expression.Function(Optional.empty(), "print",
+                                                        Arrays.asList(init(new Ast.Expression.Literal(BigInteger.valueOf(2)),
+                                                                ast -> ast.setType(Environment.Type.INTEGER)))
+                                                ), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                                        ),
+                                        new Ast.Statement.Expression(
+                                                init(new Ast.Expression.Function(Optional.empty(), "print",
+                                                        Arrays.asList(init(new Ast.Expression.Literal(BigInteger.valueOf(3)),
+                                                                ast -> ast.setType(Environment.Type.INTEGER)))
+                                                ), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                                        )
+                                )
+                        ), ast -> {})
+                )
         );
     }
 
@@ -349,6 +1208,45 @@ public final class AnalyzerTests {
                                 Arrays.asList()
                         ),
                         null
+                ),
+                Arguments.of("Else Statement",
+                        // IF TRUE DO print(1); ELSE print(2); END
+                        new Ast.Statement.If(
+                                new Ast.Expression.Literal(Boolean.TRUE),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(
+                                                new Ast.Expression.Function(Optional.empty(), "print",
+                                                        Arrays.asList(new Ast.Expression.Literal(BigInteger.ONE)))
+                                        )
+                                ),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(
+                                                new Ast.Expression.Function(Optional.empty(), "print",
+                                                        Arrays.asList(new Ast.Expression.Literal(BigInteger.valueOf(2))))
+                                        )
+                                )
+                        ),
+                        // Expected AST after analysis
+                        init(new Ast.Statement.If(
+                                init(new Ast.Expression.Literal(Boolean.TRUE),
+                                        ast -> ast.setType(Environment.Type.BOOLEAN)),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(
+                                                init(new Ast.Expression.Function(Optional.empty(), "print",
+                                                        Arrays.asList(init(new Ast.Expression.Literal(BigInteger.ONE),
+                                                                ast -> ast.setType(Environment.Type.INTEGER)))
+                                                ), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                                        )
+                                ),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(
+                                                init(new Ast.Expression.Function(Optional.empty(), "print",
+                                                        Arrays.asList(init(new Ast.Expression.Literal(BigInteger.valueOf(2)),
+                                                                ast -> ast.setType(Environment.Type.INTEGER)))
+                                                ), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                                        )
+                                )
+                        ), ast -> {})
                 )
         );
     }
