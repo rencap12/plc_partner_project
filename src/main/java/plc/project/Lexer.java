@@ -69,7 +69,7 @@ public final class Lexer {
             return lexCharacter();
         } else if (peek("\"")) {
             return lexString();
-        } else if (peek("[|,;!@#$%^&*()=<>+/-\\\\.]")) {
+        } else if (peek("[|,:;!@#$%^&*()=<>+/-\\\\.]")) {
             return lexOperator(); // Handle single-character operators
         } else {
             throw new ParseException("Unknown token", chars.index);
@@ -305,7 +305,7 @@ public final class Lexer {
 
         // Now check for single-character operators, including Unicode
         // WORK ON UNICODE
-        if (match("[.,;!@#$%^&*()+=/<>\\-]")) {  // Added '<' and '>', and ensure unicode is properly checked
+        if (match("[.,:;!@#$%^&*()+=/<>\\-]")) {  // Added '<' and '>', and ensure unicode is properly checked
             return chars.emit(Token.Type.OPERATOR);
         }
 
