@@ -90,7 +90,8 @@ public final class Parser {
             }
         }
 
-        Ast.Expression value;
+        Ast.Expression value = null;
+
 
         if (peek("=")) {
             match("="); // after this get the value for the field
@@ -103,16 +104,33 @@ public final class Parser {
                     throw new ParseException("no ;", tokens.index);
                 }
             }
-        } else {
-            if (peek(";")) {
-                match(";");
-                return new Ast.Field(name, isConstant, Optional.empty());
-            } else {
-                if (tokens.has(0)) {
-                    throw new ParseException("no ;", tokens.index);
+        } if (peek(":")) {
+            match(":");
+
+            // Type
+            if (peek(Token.Type.IDENTIFIER)) {
+                typeName = tokens.get(0).getLiteral();
+                match(Token.Type.IDENTIFIER);
+
+                // get value after type and =
+                if (match("=")) {
+                    value = parseExpression();
                 }
+
             }
         }
+        if (peek(";")) {
+            match(";");
+            if (typeName.isEmpty()) {
+                return new Ast.Field(name, isConstant, Optional.ofNullable(value));
+            }
+            return new Ast.Field(name, typeName, isConstant, Optional.ofNullable(value));
+        } else {
+            if (tokens.has(0)) {
+                throw new ParseException("no ;", tokens.index);
+            }
+        }
+
 
         throw new ParseException("NOT FIELD", tokens.index);
     }
@@ -124,6 +142,7 @@ public final class Parser {
     public Ast.Method parseMethod() throws ParseException {
         match("DEF");
         String name = "";
+        String typeName = "";
 
         // Get identifier
         if (peek(Token.Type.IDENTIFIER)) {
@@ -146,11 +165,26 @@ public final class Parser {
         }
 
         List<String> parameters = new ArrayList<>();
+        List<String> parameterTypeNames = new ArrayList<>();
 
         while (peek(Token.Type.IDENTIFIER)) {
             // Need to catch NON-IDENTIFIERS in here
             parameters.add(tokens.get(0).getLiteral());
             match(Token.Type.IDENTIFIER);
+
+            if (peek(":")) {
+                match(":");
+
+                // Type
+                if (peek(Token.Type.IDENTIFIER)) {
+                    typeName = tokens.get(0).getLiteral();
+                    match(Token.Type.IDENTIFIER);
+                    parameterTypeNames.add(typeName);
+                } else {
+                    // ACCOUNT FOR MISSING TYPE EVEN THOUGH HAVE :
+                    throw new ParseException("No type included", tokens.index);
+                }
+            }
 
             if (peek(",")) {
                 match(",");
@@ -177,6 +211,17 @@ public final class Parser {
             }
         }
 
+        // catch : and the return type
+        if (peek(":")) {
+            match(":");
+
+            // Type
+            if (peek(Token.Type.IDENTIFIER)) {
+                typeName = tokens.get(0).getLiteral();
+                match(Token.Type.IDENTIFIER);
+            }
+        }
+
         if (peek("DO")) {
             match("DO");
         } else {
@@ -193,7 +238,12 @@ public final class Parser {
 
         if (peek("END")) {
             match("END");
+            // account for returnType of source method and params' types
+            if (typeName.isEmpty()){
                 return new Ast.Method(name, parameters, statements);
+            }
+            //   public Method(String name, List<String> parameters, List<String> parameterTypeNames, Optional<String> returnTypeName, List<Statement> statements) {
+            return new Ast.Method(name, parameters, parameterTypeNames, Optional.of(typeName), statements);
         } else {
             if (tokens.has(0)) {
                 throw new ParseException("no END", tokens.index);
@@ -247,7 +297,9 @@ public final class Parser {
 
             // Type
             if (peek(Token.Type.IDENTIFIER)) {
+                typeName = tokens.get(0).getLiteral();
                 match(Token.Type.IDENTIFIER);
+
             }
         }
 
@@ -260,7 +312,12 @@ public final class Parser {
             throw new ParseException("Expected ';'", tokens.index);
         }
 
-        return new Ast.Statement.Declaration(name, value);
+        if (typeName.isEmpty()) {
+            return new Ast.Statement.Declaration(name, value);
+        }
+
+        return new Ast.Statement.Declaration(name, Optional.of(typeName), value);
+
     }
 
     /**

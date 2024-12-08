@@ -279,7 +279,8 @@ final class ParserTests {
                                 new Token(Token.Type.IDENTIFIER, "expr", 15),
                                 new Token(Token.Type.OPERATOR, ";", 19)
                         ),
-                        new Ast.Statement.Declaration("name", Optional.of(new Ast.Expression.Access(Optional.empty(), "expr")))
+                        //  public Declaration(String name, Optional<String> typeName, Optional<Ast.Expression> value) {
+                        new Ast.Statement.Declaration("name", Optional.of("Type"), Optional.of(new Ast.Expression.Access(Optional.empty(), "expr")))
                 ),
                 Arguments.of("Missing Expression", // LET name = ;
                         Arrays.asList(

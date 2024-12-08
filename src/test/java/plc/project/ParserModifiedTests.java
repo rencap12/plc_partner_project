@@ -68,6 +68,86 @@ final class ParserModifiedTests {
                                         new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt"))
                                 )))
                         )
+                ),
+                Arguments.of("Field and Method",
+                        Arrays.asList(
+                                // LET name: Type = expr; DEF name(): Type DO stmt; END
+                                new Token(Token.Type.IDENTIFIER, "LET", 0),
+                                new Token(Token.Type.IDENTIFIER, "name", 4),
+                                new Token(Token.Type.OPERATOR, ":", 8),
+                                new Token(Token.Type.IDENTIFIER, "Type", 10),
+                                new Token(Token.Type.OPERATOR, "=", 15),
+                                new Token(Token.Type.IDENTIFIER, "expr", 17),
+                                new Token(Token.Type.OPERATOR, ";", 21),
+                                new Token(Token.Type.IDENTIFIER, "DEF", 23),
+                                new Token(Token.Type.IDENTIFIER, "name", 27),
+                                new Token(Token.Type.OPERATOR, "(", 31),
+                                new Token(Token.Type.OPERATOR, ")", 32),
+                                new Token(Token.Type.OPERATOR, ":", 33),
+                                new Token(Token.Type.IDENTIFIER, "Type", 35),
+                                new Token(Token.Type.IDENTIFIER, "DO", 40),
+                                new Token(Token.Type.IDENTIFIER, "stmt", 43),
+                                new Token(Token.Type.OPERATOR, ";", 47),
+                                new Token(Token.Type.IDENTIFIER, "END", 49)
+                        ),
+                        new Ast.Source(
+                                Arrays.asList(new Ast.Field("name", "Type", false, Optional.of(new Ast.Expression.Access(Optional.empty(), "expr")))),
+                                Arrays.asList(new Ast.Method("name", Arrays.asList(), Arrays.asList(), Optional.of("Type"), Arrays.asList(
+                                        new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt"))
+                                )))
+                        )
+                ),
+
+                Arguments.of("Method and Field",
+                        Arrays.asList(
+                                // DEF name(): Type DO stmt; END LET name: Type = expr;
+                                new Token(Token.Type.IDENTIFIER, "DEF", 0),
+                                new Token(Token.Type.IDENTIFIER, "name", 4),
+                                new Token(Token.Type.OPERATOR, "(", 8),
+                                new Token(Token.Type.OPERATOR, ")", 9),
+                                new Token(Token.Type.OPERATOR, ":", 10),
+                                new Token(Token.Type.IDENTIFIER, "Type", 12),
+                                new Token(Token.Type.IDENTIFIER, "DO", 17),
+                                new Token(Token.Type.IDENTIFIER, "stmt", 20),
+                                new Token(Token.Type.OPERATOR, ";", 24),
+                                new Token(Token.Type.IDENTIFIER, "END", 26),
+                                new Token(Token.Type.IDENTIFIER, "LET", 28),
+                                new Token(Token.Type.IDENTIFIER, "name", 32),
+                                new Token(Token.Type.OPERATOR, ":", 36),
+                                new Token(Token.Type.IDENTIFIER, "Type", 38),
+                                new Token(Token.Type.OPERATOR, "=", 43),
+                                new Token(Token.Type.IDENTIFIER, "expr", 45),
+                                new Token(Token.Type.OPERATOR, ";", 49)
+                        ),
+                        new Ast.Source(
+                                Arrays.asList(
+                                        new Ast.Field("name", "Type", false, Optional.of(new Ast.Expression.Access(Optional.empty(), "expr")))
+                                ),
+                                Arrays.asList(
+                                        new Ast.Method("name", Arrays.asList(), Arrays.asList(), Optional.of("Type"), Arrays.asList(
+                                                new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt"))
+                                        ))
+                                )
+                        )
+                ),
+                Arguments.of("Parameter Type",
+                        Arrays.asList(
+                                // DEF name(arg: Type) DO stmt; END
+                                new Token(Token.Type.IDENTIFIER, "DEF", 0),
+                                new Token(Token.Type.IDENTIFIER, "name", 4),
+                                new Token(Token.Type.OPERATOR, "(", 8),
+                                new Token(Token.Type.IDENTIFIER, "arg", 9),
+                                new Token(Token.Type.OPERATOR, ":", 12),
+                                new Token(Token.Type.IDENTIFIER, "Type", 14),
+                                new Token(Token.Type.OPERATOR, ")", 18),
+                                new Token(Token.Type.IDENTIFIER, "DO", 20),
+                                new Token(Token.Type.IDENTIFIER, "stmt", 23),
+                                new Token(Token.Type.OPERATOR, ";", 27),
+                                new Token(Token.Type.IDENTIFIER, "END", 29)
+                        ),
+                        new Ast.Method("name", Arrays.asList("arg"), Arrays.asList("Type"), Optional.empty(), Arrays.asList(
+                                new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt"))
+                        ))
                 )
         );
     }
@@ -111,7 +191,8 @@ final class ParserModifiedTests {
                                 new Token(Token.Type.OPERATOR, ";", 14)
                         ),
                         new Ast.Statement.Declaration("name", Optional.of("Type"), Optional.empty())
-                ),
+                )
+                ,
                 Arguments.of("Initialization",
                         Arrays.asList(
                                 //LET name = expr;
@@ -122,6 +203,43 @@ final class ParserModifiedTests {
                                 new Token(Token.Type.OPERATOR, ";", 15)
                         ),
                         new Ast.Statement.Declaration("name", Optional.empty(), Optional.of(new Ast.Expression.Access(Optional.empty(), "expr")))
+                ),
+                Arguments.of("Type Definition",
+                        Arrays.asList(
+                                // LET name: Type;
+                                new Token(Token.Type.IDENTIFIER, "LET", 0),
+                                new Token(Token.Type.IDENTIFIER, "name", 4),
+                                new Token(Token.Type.OPERATOR, ":", 8),
+                                new Token(Token.Type.IDENTIFIER, "Type", 10),
+                                new Token(Token.Type.OPERATOR, ";", 14)
+                        ),
+                        new Ast.Statement.Declaration("name", Optional.of("Type"), Optional.empty())
+                ),
+
+                Arguments.of("Type Inference",
+                        Arrays.asList(
+                                // LET name = expr;
+                                new Token(Token.Type.IDENTIFIER, "LET", 0),
+                                new Token(Token.Type.IDENTIFIER, "name", 4),
+                                new Token(Token.Type.OPERATOR, "=", 9),
+                                new Token(Token.Type.IDENTIFIER, "expr", 11),
+                                new Token(Token.Type.OPERATOR, ";", 15)
+                        ),
+                        new Ast.Statement.Declaration("name", Optional.empty(), Optional.of(new Ast.Expression.Access(Optional.empty(), "expr")))
+                ),
+
+                Arguments.of("Type and Initialization",
+                        Arrays.asList(
+                                // LET name: Type = expr;
+                                new Token(Token.Type.IDENTIFIER, "LET", 0),
+                                new Token(Token.Type.IDENTIFIER, "name", 4),
+                                new Token(Token.Type.OPERATOR, ":", 8),
+                                new Token(Token.Type.IDENTIFIER, "Type", 10),
+                                new Token(Token.Type.OPERATOR, "=", 15),
+                                new Token(Token.Type.IDENTIFIER, "expr", 17),
+                                new Token(Token.Type.OPERATOR, ";", 21)
+                        ),
+                        new Ast.Statement.Declaration("name", Optional.of("Type"), Optional.of(new Ast.Expression.Access(Optional.empty(), "expr")))
                 )
         );
     }

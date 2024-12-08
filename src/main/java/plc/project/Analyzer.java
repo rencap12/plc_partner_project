@@ -448,6 +448,9 @@ public final class Analyzer implements Ast.Visitor<Void> {
             // Visit and validate initialization if present
             if (ast.getInitialization() != null) {
                 visit(ast.getInitialization());
+            } else {
+                throw new RuntimeException("FOR loop init not here");
+
             }
 
             // Visit and validate condition
@@ -457,6 +460,9 @@ public final class Analyzer implements Ast.Visitor<Void> {
                 if (!ast.getCondition().getType().equals(Environment.Type.BOOLEAN)) {
                     throw new RuntimeException("FOR loop condition must be a boolean expression");
                 }
+            } else {
+                throw new RuntimeException("FOR loop condition not here");
+
             }
 
             // Visit and validate increment if present
