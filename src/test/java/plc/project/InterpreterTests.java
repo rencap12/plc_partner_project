@@ -16,7 +16,65 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 final class InterpreterTests {
+
+    @Test
+    void testOrShortCircuit() {
+        // Test that OR operator short-circuits when first operand is true
+        Scope scope = new Scope(null);
+        Ast.Expression.Binary orExpression = new Ast.Expression.Binary("||",
+                new Ast.Expression.Literal(true),
+                new Ast.Expression.Access(Optional.empty(), "undefined")  // This variable doesn't exist
+        );
+
+        test(orExpression, true, scope);  // Should return true without evaluating second operand
+    }
+
+    @Test
+    void testFunctionScope() {
+        // Test function scope with closure behavior
+        Interpreter interpreter = new Interpreter(new Scope(null));
+        Scope scope = interpreter.getScope();
+
+        // Define outer scope variables
+        scope.defineVariable("x", true, Environment.create(BigInteger.ONE));
+        scope.defineVariable("y", true, Environment.create(BigInteger.valueOf(2)));
+        scope.defineVariable("z", true, Environment.create(BigInteger.valueOf(3)));
+
+        // Create function f(z)
+        List<String> parameters = Arrays.asList("z");
+        List<Ast.Statement> statements = Arrays.asList(
+                new Ast.Statement.Return(
+                        new Ast.Expression.Binary("+",
+                                new Ast.Expression.Binary("+",
+                                        new Ast.Expression.Access(Optional.empty(), "x"),
+                                        new Ast.Expression.Access(Optional.empty(), "y")
+                                ),
+                                new Ast.Expression.Access(Optional.empty(), "z")
+                        )
+                )
+        );
+        Ast.Method method = new Ast.Method("f", parameters, statements);
+        interpreter.visit(method);
+
+        // Create main() function that changes y and calls f(5)
+        List<Ast.Statement> mainStatements = Arrays.asList(
+                new Ast.Statement.Declaration("y", Optional.of(new Ast.Expression.Literal(BigInteger.valueOf(4)))),
+                new Ast.Statement.Return(
+                        new Ast.Expression.Function(Optional.empty(), "f",
+                                Arrays.asList(new Ast.Expression.Literal(BigInteger.valueOf(5))))
+                )
+        );
+        Ast.Method mainMethod = new Ast.Method("main", new ArrayList<>(), mainStatements);
+        interpreter.visit(mainMethod);
+
+        // Execute main() and verify the result
+        Environment.PlcObject result = scope.lookupFunction("main", 0).invoke(new ArrayList<>());
+        assertEquals(BigInteger.valueOf(8), result.getValue());  // Should be 1 + 2 + 5 = 8, not 10
+    }
+
 
     @ParameterizedTest
     @MethodSource
@@ -69,7 +127,7 @@ final class InterpreterTests {
     @MethodSource
     void testField(String test, Ast.Field ast, Object expected) {
         Scope scope = test(ast, Environment.NIL.getValue(), new Scope(null));
-        Assertions.assertEquals(expected, scope.lookupVariable(ast.getName()).getValue().getValue());
+        assertEquals(expected, scope.lookupVariable(ast.getName()).getValue().getValue());
     }
 
     private static Stream<Arguments> testField() {
@@ -83,7 +141,7 @@ final class InterpreterTests {
     @MethodSource
     void testMethod(String test, Ast.Method ast, List<Environment.PlcObject> args, Object expected) {
         Scope scope = test(ast, Environment.NIL.getValue(), new Scope(null));
-        Assertions.assertEquals(expected, scope.lookupFunction(ast.getName(), args.size()).invoke(args).getValue());
+        assertEquals(expected, scope.lookupFunction(ast.getName(), args.size()).invoke(args).getValue());
     }
 
     private static Stream<Arguments> testMethod() {
@@ -136,7 +194,7 @@ final class InterpreterTests {
             test(new Ast.Statement.Expression(
                     new Ast.Expression.Function(Optional.empty(), "print", Arrays.asList(new Ast.Expression.Literal("Hello, World!")))
             ), Environment.NIL.getValue(), new Scope(null));
-            Assertions.assertEquals("Hello, World!" + System.lineSeparator(), out.toString());
+            assertEquals("Hello, World!" + System.lineSeparator(), out.toString());
 
 
         } finally {
@@ -148,7 +206,7 @@ final class InterpreterTests {
     @MethodSource
     void testDeclarationStatement(String test, Ast.Statement.Declaration ast, Object expected) {
         Scope scope = test(ast, Environment.NIL.getValue(), new Scope(null));
-        Assertions.assertEquals(expected, scope.lookupVariable(ast.getName()).getValue().getValue());
+        assertEquals(expected, scope.lookupVariable(ast.getName()).getValue().getValue());
     }
 
     private static Stream<Arguments> testDeclarationStatement() {
@@ -172,7 +230,7 @@ final class InterpreterTests {
                 new Ast.Expression.Access(Optional.empty(),"variable"),
                 new Ast.Expression.Literal(BigInteger.ONE)
         ), Environment.NIL.getValue(), scope);
-        Assertions.assertEquals(BigInteger.ONE, scope.lookupVariable("variable").getValue().getValue());
+        assertEquals(BigInteger.ONE, scope.lookupVariable("variable").getValue().getValue());
     }
 
     @Test
@@ -185,7 +243,7 @@ final class InterpreterTests {
                 new Ast.Expression.Access(Optional.of(new Ast.Expression.Access(Optional.empty(), "object")),"field"),
                 new Ast.Expression.Literal(BigInteger.ONE)
         ), Environment.NIL.getValue(), scope);
-        Assertions.assertEquals(BigInteger.ONE, object.lookupVariable("field").getValue().getValue());
+        assertEquals(BigInteger.ONE, object.lookupVariable("field").getValue().getValue());
     }
 
     @ParameterizedTest
@@ -194,7 +252,7 @@ final class InterpreterTests {
         Scope scope = new Scope(null);
         scope.defineVariable("num", false, Environment.NIL);
         test(ast, Environment.NIL.getValue(), scope);
-        Assertions.assertEquals(expected, scope.lookupVariable("num").getValue().getValue());
+        assertEquals(expected, scope.lookupVariable("num").getValue().getValue());
     }
 
     private static Stream<Arguments> testIfStatement() {
@@ -244,8 +302,8 @@ final class InterpreterTests {
         ), Environment.NIL.getValue(), scope);
 
         // you can evaluate the state of each variable in scope one at a time, here is an example:
-        Assertions.assertEquals(BigInteger.TEN, scope.lookupVariable("sum").getValue().getValue());
-        Assertions.assertEquals(BigInteger.valueOf(5), scope.lookupVariable("num").getValue().getValue());
+        assertEquals(BigInteger.TEN, scope.lookupVariable("sum").getValue().getValue());
+        assertEquals(BigInteger.valueOf(5), scope.lookupVariable("num").getValue().getValue());
 
         // you can also build a list of the expected results, comparing all as a group
         // expected is what the test case expects to be produced by your solution
@@ -258,7 +316,7 @@ final class InterpreterTests {
         actual.add(scope.lookupVariable("sum").getValue().getValue());
         actual.add(scope.lookupVariable("num").getValue().getValue());
 
-        Assertions.assertEquals(expected, actual);
+        assertEquals(expected, actual);
     }
 
     @Test
@@ -278,7 +336,7 @@ final class InterpreterTests {
                         )
                 ))
         ),Environment.NIL.getValue(), scope);
-        Assertions.assertEquals(BigInteger.TEN, scope.lookupVariable("num").getValue().getValue());
+        assertEquals(BigInteger.TEN, scope.lookupVariable("num").getValue().getValue());
     }
 
     @ParameterizedTest
@@ -506,7 +564,7 @@ final class InterpreterTests {
                 "log",
                 Arrays.asList(new Ast.Expression.Literal(BigInteger.ONE)
                 )), BigInteger.ONE, scope);
-        Assertions.assertEquals("1", builder.toString());
+        assertEquals("1", builder.toString());
     }
 
 
@@ -532,7 +590,7 @@ final class InterpreterTests {
                         Arrays.asList(new Ast.Expression.Literal(BigInteger.ONE))
                 )
         ), Environment.NIL.getValue(), scope);
-        Assertions.assertEquals("1", builder.toString());
+        assertEquals("1", builder.toString());
     }
 
     // errors
@@ -556,7 +614,7 @@ final class InterpreterTests {
         });
 
         // Assert that the exception message matches the expected output
-        Assertions.assertEquals("Expected type java.lang.Boolean, received java.lang.String.", exception.getMessage());
+        assertEquals("Expected type java.lang.Boolean, received java.lang.String.", exception.getMessage());
     }
 
 
@@ -674,7 +732,7 @@ final class InterpreterTests {
     private static Scope test(Ast ast, Object expected, Scope scope) {
         Interpreter interpreter = new Interpreter(scope);
         if (expected != null) {
-            Assertions.assertEquals(expected, interpreter.visit(ast).getValue());
+            assertEquals(expected, interpreter.visit(ast).getValue());
         } else {
             Assertions.assertThrows(RuntimeException.class, () -> interpreter.visit(ast));
         }
