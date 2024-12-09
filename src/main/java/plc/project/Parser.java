@@ -358,8 +358,16 @@ public final class Parser {
                 throw new ParseException("NO END, ", tokens.index);
             }
         }
+        else {
+            if (tokens.has(0)) { // index of the invalid token
+                throw new ParseException("Expected 'DO'", tokens.get(0).getIndex());
+            }
+            else {
+                throw new ParseException("Expected 'DO'", tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
+            }
+        }
 
-        throw new ParseException("NO DO, ", tokens.index);
+        // throw new ParseException("NO DO, ", tokens.index);
 
     }
 
@@ -708,10 +716,11 @@ public final class Parser {
             Ast.Expression expression = parseExpression();
             if (!peek(")")) {
                 if (!peek("+") && !peek("-") && !peek("*") && !peek("/") && !peek("&&") && !peek("||") && !peek("<") && !peek("<=") && !peek(">") && !peek(">=") && !peek("==") && !peek("!=")) {
-                    match(")");
-                    throw new ParseException("Expected closing parentheses ')'", tokens.index);
+                    // match(")");
+                    throw new ParseException("Expected closing parentheses ')'", tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
                 }
             }
+            match(")");
             return new Ast.Expression.Group(expression);
 
         } else {

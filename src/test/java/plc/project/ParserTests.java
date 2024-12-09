@@ -22,6 +22,146 @@ final class ParserTests {
 
     @ParameterizedTest
     @MethodSource
+    void testIfStatementErrors(String test, List<Token> tokens, String expectedMessage, int expectedIndex) {
+        Parser parser = new Parser(tokens);
+        try {
+            parser.parseStatement();
+            Assertions.fail("Expected ParseException was not thrown");
+        } catch (ParseException e) {
+            System.out.println("Test: " + test);
+            System.out.println("Expected index: " + expectedIndex);
+            System.out.println("Actual index: " + e.getIndex());
+            System.out.println("Error message: " + e.getMessage());
+
+            Assertions.assertEquals(expectedMessage, e.getMessage(),
+                    "Expected message: '" + expectedMessage + "' but got: '" + e.getMessage() + "'");
+            Assertions.assertEquals(expectedIndex, e.getIndex(),
+                    "Expected error at index " + expectedIndex + " but got error at index " + e.getIndex());
+        }
+    }
+
+    private static Stream<Arguments> testIfStatementErrors() {
+        return Stream.of(
+                // Case 1: Missing DO after expr
+                // IF expr
+                //       ^ error here (after expr)
+                Arguments.of("Missing DO",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "IF", 0),
+                                new Token(Token.Type.IDENTIFIER, "expr", 3)
+                                // Missing DO token - error should be at index 7 (after "expr")
+                        ),
+                        "Expected 'DO'",
+                        7  // 3 (start of expr) + 4 (length of "expr")
+                ),
+
+                // Case 2: Invalid DO (THEN instead)
+                // IF expr THEN
+                //       ^ error here (at THEN)
+                Arguments.of("Invalid DO",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "IF", 0),
+                                new Token(Token.Type.IDENTIFIER, "expr", 3),
+                                new Token(Token.Type.IDENTIFIER, "THEN", 8)
+                                // THEN instead of DO - error should be at index 8
+                        ),
+                        "Expected 'DO'",
+                        8  // index where THEN starts
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testParenthesisErrors(String test, List<Token> tokens, String expectedMessage, int expectedIndex) {
+        Parser parser = new Parser(tokens);
+        try {
+            parser.parseExpression();
+            Assertions.fail("Expected ParseException was not thrown");
+        } catch (ParseException e) {
+            // Print the actual error details for debugging
+            System.out.println("Test case: " + test);
+            System.out.println("Actual error message: " + e.getMessage());
+            System.out.println("Actual error index: " + e.getIndex());
+
+            // Assert both message and index
+            Assertions.assertEquals(expectedMessage, e.getMessage(),
+                    "Expected message: '" + expectedMessage + "' but got: '" + e.getMessage() + "'");
+            Assertions.assertEquals(expectedIndex, e.getIndex(),
+                    "Expected error at index " + expectedIndex + " but got error at index " + e.getIndex());
+        }
+    }
+
+    private static Stream<Arguments> testParenthesisErrors() {
+        return Stream.of(
+                // Case 1: Missing closing parenthesis completely
+                Arguments.of("Missing Closing Parenthesis",
+                        Arrays.asList(
+                                new Token(Token.Type.OPERATOR, "(", 0),
+                                new Token(Token.Type.IDENTIFIER, "expr", 1)
+                        ),
+                        "Expected closing parentheses ')'",
+                        5  // index should be where we detect the missing parenthesis
+                ),
+
+                // Case 2: Invalid character instead of closing parenthesis
+                Arguments.of("Invalid Closing Character",
+                        Arrays.asList(
+                                new Token(Token.Type.OPERATOR, "(", 0),
+                                new Token(Token.Type.IDENTIFIER, "expr", 1),
+                                new Token(Token.Type.OPERATOR, "]", 5)
+                        ),
+                        "Expected closing parentheses ')'",
+                        5  // index should be at the invalid closing character
+                ),
+
+                // Case 3: Missing closing parenthesis with invalid operator
+                Arguments.of("Missing Parenthesis With Invalid Operator",
+                        Arrays.asList(
+                                new Token(Token.Type.OPERATOR, "(", 0),
+                                new Token(Token.Type.IDENTIFIER, "expr", 1),
+                                new Token(Token.Type.OPERATOR, "@", 5)
+                        ),
+                        "Expected closing parentheses ')'",
+                        5  // index should be at the invalid operator
+                )
+        );
+    }
+    @ParameterizedTest
+    @MethodSource
+    void testInvalidExpression(String test, List<Token> tokens, Ast.Expression expected) {
+        test(tokens, expected, Parser::parseExpression);
+    }
+
+    private static Stream<Arguments> testInvalidExpression() {
+        return Stream.of(
+                Arguments.of("Invalid Expression",
+                        Arrays.asList(
+                                new Token(Token.Type.OPERATOR, "?", 0)
+                        ),
+                        null
+                ),
+                Arguments.of("Missing Closing Parenthesis",
+                        Arrays.asList(
+                                new Token(Token.Type.OPERATOR, "(", 0),
+                                new Token(Token.Type.IDENTIFIER, "expr", 1)
+                        ),
+                        null
+                )
+                ,
+                Arguments.of("Invalid Closing Parenthesis",
+                        Arrays.asList(
+                                new Token(Token.Type.OPERATOR, "(", 0),
+                                new Token(Token.Type.IDENTIFIER, "expr", 1),
+                                new Token(Token.Type.OPERATOR, "]", 5)
+                        ),
+                        null
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
     void testSource(String test, List<Token> tokens, Ast.Source expected) {
         test(tokens, expected, Parser::parseSource);
     }
@@ -385,6 +525,23 @@ final class ParserTests {
                                 new Token(Token.Type.IDENTIFIER, "END", 14)
                         ),
                        null // throws an error
+                ),
+                Arguments.of("Missing DO",
+                        Arrays.asList(
+                                // IF expr
+                                new Token(Token.Type.IDENTIFIER, "IF", 0),
+                                new Token(Token.Type.IDENTIFIER, "expr", 3)
+                        ),
+                        null // Expect parsing to fail due to missing DO
+                ),
+                Arguments.of("Invalid DO",
+                        Arrays.asList(
+                                // IF expr THEN
+                                new Token(Token.Type.IDENTIFIER, "IF", 0),
+                                new Token(Token.Type.IDENTIFIER, "expr", 3),
+                                new Token(Token.Type.IDENTIFIER, "THEN", 8)
+                        ),
+                        null // Expect parsing to fail due to invalid DO keyword
                 ),
                 Arguments.of("Else",
                         Arrays.asList(

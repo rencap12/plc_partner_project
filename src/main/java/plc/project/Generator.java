@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public final class Generator implements Ast.Visitor<Void> {
-    //Something
+
     private final PrintWriter writer;
     private int indent = 0;
 
