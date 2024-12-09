@@ -299,7 +299,10 @@ public final class Parser {
             if (peek(Token.Type.IDENTIFIER)) {
                 typeName = tokens.get(0).getLiteral();
                 match(Token.Type.IDENTIFIER);
-
+            }
+        } else {
+            if (peek(";")) {
+                throw new ParseException("Expected Type with Field Declaration", tokens.index);
             }
         }
 

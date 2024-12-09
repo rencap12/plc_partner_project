@@ -395,7 +395,7 @@ final class ParserTests {
                                 new Token(Token.Type.IDENTIFIER, "name", 4),
                                 new Token(Token.Type.OPERATOR, ";", 8)
                         ),
-                        new Ast.Statement.Declaration("name", Optional.empty())
+                        null // expected types now
                 ),
                 Arguments.of("Initialization",
                         Arrays.asList(
@@ -443,7 +443,7 @@ final class ParserTests {
                                 new Token(Token.Type.IDENTIFIER, "name", 4),
                                 new Token(Token.Type.OPERATOR, ";", 8)
                         ),
-                        new Ast.Statement.Declaration("name", Optional.empty())
+                        null
                 ),
                 Arguments.of("Initialization without Semicolon", // LET name = expr
                         Arrays.asList(

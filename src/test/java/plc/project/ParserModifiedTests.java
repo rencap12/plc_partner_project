@@ -240,6 +240,15 @@ final class ParserModifiedTests {
                                 new Token(Token.Type.OPERATOR, ";", 21)
                         ),
                         new Ast.Statement.Declaration("name", Optional.of("Type"), Optional.of(new Ast.Expression.Access(Optional.empty(), "expr")))
+                ),
+                Arguments.of("Field No Type",
+                        Arrays.asList(
+                                //LET name;
+                                new Token(Token.Type.IDENTIFIER, "LET", 0),
+                                new Token(Token.Type.IDENTIFIER, "name", 4),
+                                new Token(Token.Type.OPERATOR, ";", 8)
+                        ),
+                        null  // Expects ParseException to be thrown
                 )
         );
     }
