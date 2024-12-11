@@ -185,7 +185,39 @@ public class GeneratorTests {
                                 "    stmt2;",
                                 "}"
                         )
+                ),  Arguments.of("If another",
+                        new Ast.Statement.If(
+                                init(new Ast.Expression.Access(Optional.empty(), "cond"),
+                                        ast -> ast.setVariable(new Environment.Variable("cond", "cond", Environment.Type.BOOLEAN, true, Environment.NIL))),
+                                Arrays.asList(new Ast.Statement.Expression(init(new Ast.Expression.Function(Optional.empty(), "print", Arrays.asList(
+                                        init(new Ast.Expression.Literal("cond is true."), ast -> ast.setType(Environment.Type.STRING))
+                                )), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL))))),
+                                Arrays.asList()
+                        ),
+                        String.join(System.lineSeparator(),
+                                "if (cond) {",
+                                "    System.out.println(\"cond is true.\");",
+                                "}")
+                ),
+                Arguments.of("If Else",
+                        new Ast.Statement.If(
+                                init(new Ast.Expression.Access(Optional.empty(), "cond"),
+                                        ast -> ast.setVariable(new Environment.Variable("cond", "cond", Environment.Type.BOOLEAN, true, Environment.NIL))),
+                                Arrays.asList(new Ast.Statement.Expression(init(new Ast.Expression.Function(Optional.empty(), "print", Arrays.asList(
+                                        init(new Ast.Expression.Literal("cond is true."), ast -> ast.setType(Environment.Type.STRING))
+                                )), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL))))),
+                                Arrays.asList(new Ast.Statement.Expression(init(new Ast.Expression.Function(Optional.empty(), "print", Arrays.asList(
+                                        init(new Ast.Expression.Literal("cond is false."), ast -> ast.setType(Environment.Type.STRING))
+                                )), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))))
+                        ),
+                        String.join(System.lineSeparator(),
+                                "if (cond) {",
+                                "    System.out.println(\"cond is true.\");",
+                                "} else {",
+                                "    System.out.println(\"cond is false.\");",
+                                "}")
                 )
+
         );
     }
 
@@ -290,6 +322,191 @@ public class GeneratorTests {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
+    void testWhileStatement(String test, Ast.Statement.While ast, String expected) {
+        test(ast, expected);
+    }
+
+    private static Stream<Arguments> testWhileStatement() {
+        return Stream.of(
+                Arguments.of("One Statement",
+                        // WHILE cond DO
+                        //     function(1);
+                        // END
+                        new Ast.Statement.While(
+                                init(new Ast.Expression.Access(Optional.empty(), "cond"),
+                                        ast -> ast.setVariable(new Environment.Variable("cond", "cond", Environment.Type.BOOLEAN, true, Environment.NIL))),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(
+                                                init(new Ast.Expression.Function(Optional.empty(), "function", Arrays.asList(
+                                                        init(new Ast.Expression.Literal(BigInteger.ONE), ast -> ast.setType(Environment.Type.INTEGER))
+                                                )), ast -> ast.setFunction(new Environment.Function("function", "function", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                                        )
+                                )
+                        ),
+                        String.join(System.lineSeparator(),
+                                "while (cond) {",
+                                "    function(1);",
+                                "}")
+                ),
+                Arguments.of("Multiple Statements",
+                        // WHILE cond DO
+                        //     function(1);
+                        //     function(2);
+                        //     function(3);
+                        // END
+                        new Ast.Statement.While(
+                                init(new Ast.Expression.Access(Optional.empty(), "cond"),
+                                        ast -> ast.setVariable(new Environment.Variable("cond", "cond", Environment.Type.BOOLEAN, true, Environment.NIL))),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(
+                                                init(new Ast.Expression.Function(Optional.empty(), "function", Arrays.asList(
+                                                        init(new Ast.Expression.Literal(BigInteger.ONE), ast -> ast.setType(Environment.Type.INTEGER))
+                                                )), ast -> ast.setFunction(new Environment.Function("function", "function", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                                        ),
+                                        new Ast.Statement.Expression(
+                                                init(new Ast.Expression.Function(Optional.empty(), "function", Arrays.asList(
+                                                        init(new Ast.Expression.Literal(BigInteger.valueOf(2)), ast -> ast.setType(Environment.Type.INTEGER))
+                                                )), ast -> ast.setFunction(new Environment.Function("function", "function", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                                        ),
+                                        new Ast.Statement.Expression(
+                                                init(new Ast.Expression.Function(Optional.empty(), "function", Arrays.asList(
+                                                        init(new Ast.Expression.Literal(BigInteger.valueOf(3)), ast -> ast.setType(Environment.Type.INTEGER))
+                                                )), ast -> ast.setFunction(new Environment.Function("function", "function", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                                        )
+                                )
+                        ),
+                        String.join(System.lineSeparator(),
+                                "while (cond) {",
+                                "    function(1);",
+                                "    function(2);",
+                                "    function(3);",
+                                "}")
+                ),
+                Arguments.of("No Statements",
+                        // WHILE cond DO END
+                        new Ast.Statement.While(
+                                init(new Ast.Expression.Access(Optional.empty(), "cond"),
+                                        ast -> ast.setVariable(new Environment.Variable("cond", "cond", Environment.Type.BOOLEAN, true, Environment.NIL))),
+                                Arrays.asList()
+                        ),
+                        String.join(System.lineSeparator(),
+                                "while (cond) {",
+                                "}")
+                ),
+                Arguments.of("Nested While",
+                        // WHILE cond1 DO
+                        //     WHILE cond2 DO
+                        //         function(1);
+                        //     END
+                        // END
+                        new Ast.Statement.While(
+                                init(new Ast.Expression.Access(Optional.empty(), "cond1"),
+                                        ast -> ast.setVariable(new Environment.Variable("cond1", "cond1", Environment.Type.BOOLEAN, true, Environment.NIL))),
+                                Arrays.asList(
+                                        new Ast.Statement.While(
+                                                init(new Ast.Expression.Access(Optional.empty(), "cond2"),
+                                                        ast -> ast.setVariable(new Environment.Variable("cond2", "cond2", Environment.Type.BOOLEAN, true, Environment.NIL))),
+                                                Arrays.asList(
+                                                        new Ast.Statement.Expression(
+                                                                init(new Ast.Expression.Function(Optional.empty(), "function", Arrays.asList(
+                                                                        init(new Ast.Expression.Literal(BigInteger.ONE), ast -> ast.setType(Environment.Type.INTEGER))
+                                                                )), ast -> ast.setFunction(new Environment.Function("function", "function", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                                                        )
+                                                )
+                                        )
+                                )
+                        ),
+                        String.join(System.lineSeparator(),
+                                "while (cond1) {",
+                                "    while (cond2) {",
+                                "        function(1);",
+                                "    }",
+                                "}")
+                ),
+                Arguments.of("Comparison Condition",
+                        // WHILE num < 10 DO
+                        //     function(num);
+                        // END
+                        new Ast.Statement.While(
+                                init(new Ast.Expression.Binary("<",
+                                                init(new Ast.Expression.Access(Optional.empty(), "num"),
+                                                        ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL))),
+                                                init(new Ast.Expression.Literal(BigInteger.TEN),
+                                                        ast -> ast.setType(Environment.Type.INTEGER))),
+                                        ast -> ast.setType(Environment.Type.BOOLEAN)),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(
+                                                init(new Ast.Expression.Function(Optional.empty(), "function", Arrays.asList(
+                                                        init(new Ast.Expression.Access(Optional.empty(), "num"),
+                                                                ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL)))
+                                                )), ast -> ast.setFunction(new Environment.Function("function", "function", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+                                        )
+                                )
+                        ),
+                        String.join(System.lineSeparator(),
+                                "while (num < 10) {",
+                                "    function(num);",
+                                "}")
+                )
+        );
+    }
+
+//    private static Stream<Arguments> testWhileStatement() {
+//        return Stream.of(
+//                Arguments.of("Empty While",
+//                        new Ast.Statement.While(
+//                                init(new Ast.Expression.Access(Optional.empty(), "cond"),
+//                                        ast -> ast.setVariable(new Environment.Variable("cond", "cond", Environment.Type.BOOLEAN, true, Environment.NIL))),
+//                                Arrays.asList()
+//                        ),
+//                        String.join(System.lineSeparator(),
+//                                "while (cond) {",
+//                                "}")
+//                ),
+//                Arguments.of("Multiple Statements While",
+//                        new Ast.Statement.While(
+//                                init(new Ast.Expression.Binary("<",
+//                                                init(new Ast.Expression.Access(Optional.empty(), "num"),
+//                                                        ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL))),
+//                                                init(new Ast.Expression.Literal(BigInteger.TEN),
+//                                                        ast -> ast.setType(Environment.Type.INTEGER))),
+//                                        ast -> ast.setType(Environment.Type.BOOLEAN)),
+//                                Arrays.asList(
+//                                        // First statement: print(num + "\n")
+//                                        new Ast.Statement.Expression(
+//                                                init(new Ast.Expression.Function(Optional.empty(), "print", Arrays.asList(
+//                                                        init(new Ast.Expression.Binary("+",
+//                                                                        init(new Ast.Expression.Access(Optional.empty(), "num"),
+//                                                                                ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL))),
+//                                                                        init(new Ast.Expression.Literal("\\n"),
+//                                                                                ast -> ast.setType(Environment.Type.STRING))),
+//                                                                ast -> ast.setType(Environment.Type.STRING))
+//                                                )), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL)))
+//                                        ),
+//                                        // Second statement: num = num + 1
+//                                        new Ast.Statement.Assignment(
+//                                                init(new Ast.Expression.Access(Optional.empty(), "num"),
+//                                                        ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL))),
+//                                                init(new Ast.Expression.Binary("+",
+//                                                                init(new Ast.Expression.Access(Optional.empty(), "num"),
+//                                                                        ast -> ast.setVariable(new Environment.Variable("num", "num", Environment.Type.INTEGER, false, Environment.NIL))),
+//                                                                init(new Ast.Expression.Literal(BigInteger.ONE),
+//                                                                        ast -> ast.setType(Environment.Type.INTEGER))),
+//                                                        ast -> ast.setType(Environment.Type.INTEGER))
+//                                        )
+//                                )
+//                        ),
+//                        String.join(System.lineSeparator(),
+//                                "while (num < 10) {",
+//                                "    System.out.println(num + \"\\n\");",
+//                                "    num = num + 1;",
+//                                "}")
+//                )
+//        );
+//    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
     void testBinaryExpression(String test, Ast.Expression.Binary ast, String expected) {
         test(ast, expected);
     }
@@ -311,10 +528,102 @@ public class GeneratorTests {
                                 init(new Ast.Expression.Literal(BigInteger.TEN), ast -> ast.setType(Environment.Type.INTEGER))
                         ), ast -> ast.setType(Environment.Type.STRING)),
                         "\"Ben\" + 10"
+                ),
+                Arguments.of("Comparison",
+                        init(new Ast.Expression.Binary(">",
+                                init(new Ast.Expression.Literal(BigInteger.ONE), ast -> ast.setType(Environment.Type.INTEGER)),
+                                init(new Ast.Expression.Literal(BigInteger.TEN), ast -> ast.setType(Environment.Type.INTEGER))
+                        ), ast -> ast.setType(Environment.Type.BOOLEAN)),
+                        "1 > 10"
+                ),
+                Arguments.of("Addition",
+                        init(new Ast.Expression.Binary("+",
+                                init(new Ast.Expression.Literal(BigInteger.ONE), ast -> ast.setType(Environment.Type.INTEGER)),
+                                init(new Ast.Expression.Literal(BigInteger.TEN), ast -> ast.setType(Environment.Type.INTEGER))
+                        ), ast -> ast.setType(Environment.Type.INTEGER)),
+                        "1 + 10"
                 )
         );
     }
 
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    void testAssignmentStatement(String test, Ast.Statement.Assignment ast, String expected) {
+        test(ast, expected);
+    }
+
+    private static Stream<Arguments> testAssignmentStatement() {
+        return Stream.of(
+                Arguments.of("Variable Assignment",
+                        new Ast.Statement.Assignment(
+                                init(new Ast.Expression.Access(Optional.empty(), "variable"),
+                                        ast -> ast.setVariable(new Environment.Variable("variable", "variable", Environment.Type.INTEGER, false, Environment.NIL))),
+                                init(new Ast.Expression.Literal(BigInteger.ONE),
+                                        ast -> ast.setType(Environment.Type.INTEGER))
+                        ),
+                        "variable = 1;"
+                ),
+                Arguments.of("Field Assignment",
+                        new Ast.Statement.Assignment(
+                                init(new Ast.Expression.Access(
+                                                Optional.of(init(new Ast.Expression.Access(Optional.empty(), "object"),
+                                                        ast -> ast.setVariable(new Environment.Variable("object", "object", Environment.Type.NIL, false, Environment.NIL)))),
+                                                "field"),
+                                        ast -> ast.setVariable(new Environment.Variable("field", "field", Environment.Type.INTEGER, false, Environment.NIL))),
+                                init(new Ast.Expression.Literal(BigInteger.ONE),
+                                        ast -> ast.setType(Environment.Type.INTEGER))
+                        ),
+                        "object.field = 1;"
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    void testLiteralExpression(String test, Ast.Expression.Literal ast, String expected) {
+        test(ast, expected);
+    }
+
+    private static Stream<Arguments> testLiteralExpression() {
+        return Stream.of(
+                Arguments.of("Boolean",
+                        init(new Ast.Expression.Literal(true), ast -> ast.setType(Environment.Type.BOOLEAN)),
+                        "true"
+                ),
+                Arguments.of("Integer",
+                        init(new Ast.Expression.Literal(BigInteger.ONE), ast -> ast.setType(Environment.Type.INTEGER)),
+                        "1"
+                ),
+                Arguments.of("Decimal",
+                        init(new Ast.Expression.Literal(new BigDecimal("123.456")), ast -> ast.setType(Environment.Type.DECIMAL)),
+                        "123.456"
+                ),
+                Arguments.of("String",
+                        init(new Ast.Expression.Literal("Hello World"), ast -> ast.setType(Environment.Type.STRING)),
+                        "\"Hello World\""
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    void testGroupExpression(String test, Ast.Expression.Group ast, String expected) {
+        test(ast, expected);
+    }
+
+    private static Stream<Arguments> testGroupExpression() {
+        return Stream.of(
+                Arguments.of("Binary",
+                        init(new Ast.Expression.Group(
+                                init(new Ast.Expression.Binary("+",
+                                        init(new Ast.Expression.Literal(BigInteger.ONE), ast -> ast.setType(Environment.Type.INTEGER)),
+                                        init(new Ast.Expression.Literal(BigInteger.TEN), ast -> ast.setType(Environment.Type.INTEGER))
+                                ), ast -> ast.setType(Environment.Type.INTEGER))
+                        ), ast -> ast.setType(Environment.Type.INTEGER)),
+                        "(1 + 10)"
+                )
+        );
+    }
     @ParameterizedTest(name = "{0}")
     @MethodSource
     void testFunctionExpression(String test, Ast.Expression.Function ast, String expected) {
@@ -329,6 +638,21 @@ public class GeneratorTests {
                                 init(new Ast.Expression.Literal("Hello, World!"), ast -> ast.setType(Environment.Type.STRING))
                         )), ast -> ast.setFunction(new Environment.Function("print", "System.out.println", Arrays.asList(Environment.Type.ANY), Environment.Type.NIL, args -> Environment.NIL))),
                         "System.out.println(\"Hello, World!\")"
+                ),
+                Arguments.of("Zero Arguments",
+                        init(new Ast.Expression.Function(Optional.empty(), "function", Arrays.asList()),
+                                ast -> ast.setFunction(new Environment.Function("function", "function", Arrays.asList(), Environment.Type.NIL, args -> Environment.NIL))),
+                        "function()"
+                ),
+                Arguments.of("String Slice",
+                        init(new Ast.Expression.Function(
+                                Optional.of(init(new Ast.Expression.Literal("string"), ast -> ast.setType(Environment.Type.STRING))),
+                                "slice",
+                                Arrays.asList(
+                                        init(new Ast.Expression.Literal(BigInteger.ONE), ast -> ast.setType(Environment.Type.INTEGER)),
+                                        init(new Ast.Expression.Literal(BigInteger.valueOf(5)), ast -> ast.setType(Environment.Type.INTEGER))
+                                )), ast -> ast.setFunction(new Environment.Function("slice", "substring", Arrays.asList(Environment.Type.INTEGER, Environment.Type.INTEGER), Environment.Type.STRING, args -> Environment.NIL))),
+                        "\"string\".substring(1, 5)"
                 )
         );
     }
@@ -426,6 +750,7 @@ public class GeneratorTests {
         StringWriter writer = new StringWriter();
         new Generator(new PrintWriter(writer)).visit(ast);
         Assertions.assertEquals(expected, writer.toString());
+        System.out.println(writer.toString());
     }
 
     /**

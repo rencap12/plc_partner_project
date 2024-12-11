@@ -36,13 +36,19 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Method ast) {
+        Scope definitionScope = scope; // Capture the scope at definition time
+
         scope.defineFunction(ast.getName(), ast.getParameters().size(), args -> {
-            Scope functionScope = new Scope(scope);
+            Scope functionScope = new Scope(definitionScope); // Use the captured definition scope
+
+            // Define parameters in the function scope
             for (int i = 0; i < ast.getParameters().size(); i++) {
                 functionScope.defineVariable(ast.getParameters().get(i), true, args.get(i));
             }
+
             Scope previousScope = scope;
             scope = functionScope;
+
             try {
                 for (Ast.Statement statement : ast.getStatements()) {
                     visit(statement);
@@ -54,8 +60,32 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             }
             return Environment.NIL;
         });
+
         return Environment.NIL;
     }
+//
+//    @Override
+//    public Environment.PlcObject visit(Ast.Method ast) {
+//        scope.defineFunction(ast.getName(), ast.getParameters().size(), args -> {
+//            Scope functionScope = new Scope(scope);
+//            for (int i = 0; i < ast.getParameters().size(); i++) {
+//                functionScope.defineVariable(ast.getParameters().get(i), true, args.get(i));
+//            }
+//            Scope previousScope = scope;
+//            scope = functionScope;
+//            try {
+//                for (Ast.Statement statement : ast.getStatements()) {
+//                    visit(statement);
+//                }
+//            } catch (Return returnException) {
+//                return returnException.value;
+//            } finally {
+//                scope = previousScope;
+//            }
+//            return Environment.NIL;
+//        });
+//        return Environment.NIL;
+//    }
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Expression ast) {
@@ -176,7 +206,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     @Override
     public Environment.PlcObject visit(Ast.Expression.Binary ast) {
         Environment.PlcObject leftObject = visit(ast.getLeft());
-        if (ast.getOperator() == "||")
+        if (ast.getOperator().equals("||"))
             if (leftObject.getValue().equals(true))
                 return Environment.create(requireType(Boolean.class, leftObject));
         Environment.PlcObject rightObject = visit(ast.getRight());

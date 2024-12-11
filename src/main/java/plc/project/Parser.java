@@ -139,26 +139,142 @@ public final class Parser {
      * Parses the {@code method} rule. This method should only be called if the
      * next tokens start a method, aka {@code DEF}.
      */
+//    public Ast.Method parseMethod() throws ParseException {
+//        match("DEF");
+//        String name = "";
+//        String typeName = "";
+//
+//        // Get identifier
+//        if (peek(Token.Type.IDENTIFIER)) {
+//            name = tokens.get(0).getLiteral();
+//            match(Token.Type.IDENTIFIER);
+//        } else {
+//            if (tokens.has(0)) {
+//                throw new ParseException("no identifier",
+//                        tokens.index);
+//            }
+//        }
+//
+//        // Check (
+//        if (peek("("))
+//            match("(");
+//        else {
+//            if (tokens.has(0)) {
+//                throw new ParseException("no (", tokens.index);
+//            }
+//        }
+//
+//        List<String> parameters = new ArrayList<>();
+//        List<String> parameterTypeNames = new ArrayList<>();
+//
+//        while (peek(Token.Type.IDENTIFIER)) {
+//            // Need to catch NON-IDENTIFIERS in here
+//            parameters.add(tokens.get(0).getLiteral());
+//            match(Token.Type.IDENTIFIER);
+//
+//            if (peek(":")) {
+//                match(":");
+//
+//                // Type
+//                if (peek(Token.Type.IDENTIFIER)) {
+//                    typeName = tokens.get(0).getLiteral();
+//                    match(Token.Type.IDENTIFIER);
+//                    parameterTypeNames.add(typeName);
+//                } else {
+//                    // ACCOUNT FOR MISSING TYPE EVEN THOUGH HAVE :
+//                    throw new ParseException("No type included", tokens.index);
+//                }
+//            } else{
+//                throw new ParseException("No type included", tokens.index);
+//            }
+//
+//            if (peek(",")) {
+//                match(",");
+//                if (peek(")")) {
+//                    throw new ParseException("trailing comma",
+//                            tokens.index);
+//                }
+//            } else {
+//                if (!peek(")")) {
+//                    if (tokens.has(0)) {
+//                        throw new ParseException("no , before )",
+//                                tokens.index);
+//                    }
+//                }
+//            }
+//        }
+//
+//        // Check )
+//        if (peek(")")) {
+//            match(")");
+//        } else {
+//            if (tokens.has(0)) {
+//                throw new ParseException("no )", tokens.index);
+//            }
+//        }
+//
+//        // catch : and the return type
+//        if (peek(":")) {
+//            match(":");
+//
+//            // Type
+//            if (peek(Token.Type.IDENTIFIER)) {
+//                typeName = tokens.get(0).getLiteral();
+//                match(Token.Type.IDENTIFIER);
+//            }
+//        }
+//
+//        if (peek("DO")) {
+//            match("DO");
+//        } else {
+//            if (tokens.has(0)) {
+//                throw new ParseException("no DO", tokens.index);
+//            }
+//        }
+//
+//        List<Ast.Statement> statements = new ArrayList<>();
+//
+//        while (!peek("END")) {
+//            statements.add(parseStatement());
+//        }
+//
+//        if (peek("END")) {
+//            match("END");
+//            // account for returnType of source method and params' types
+//            if (typeName.isEmpty()){
+//                return new Ast.Method(name, parameters, statements);
+//            }
+//            //   public Method(String name, List<String> parameters, List<String> parameterTypeNames, Optional<String> returnTypeName, List<Statement> statements) {
+//            return new Ast.Method(name, parameters, parameterTypeNames, Optional.of(typeName), statements);
+//        } else {
+//            if (tokens.has(0)) {
+//                throw new ParseException("no END", tokens.index);
+//            }
+//        }
+//
+//        throw new ParseException("NO METHOD PARSED", tokens.index);
+//    }
+
+
     public Ast.Method parseMethod() throws ParseException {
         match("DEF");
         String name = "";
-        String typeName = "";
+        String returnTypeName = "Any";  // Default to "Any"
 
-        // Get identifier
+        // Get method name
         if (peek(Token.Type.IDENTIFIER)) {
             name = tokens.get(0).getLiteral();
             match(Token.Type.IDENTIFIER);
         } else {
             if (tokens.has(0)) {
-                throw new ParseException("no identifier",
-                        tokens.index);
+                throw new ParseException("no identifier", tokens.index);
             }
         }
 
         // Check (
-        if (peek("("))
+        if (peek("(")) {
             match("(");
-        else {
+        } else {
             if (tokens.has(0)) {
                 throw new ParseException("no (", tokens.index);
             }
@@ -168,35 +284,35 @@ public final class Parser {
         List<String> parameterTypeNames = new ArrayList<>();
 
         while (peek(Token.Type.IDENTIFIER)) {
-            // Need to catch NON-IDENTIFIERS in here
+            // Get parameter name
             parameters.add(tokens.get(0).getLiteral());
             match(Token.Type.IDENTIFIER);
 
             if (peek(":")) {
                 match(":");
 
-                // Type
+                // Get parameter type
                 if (peek(Token.Type.IDENTIFIER)) {
-                    typeName = tokens.get(0).getLiteral();
+                    String paramType = tokens.get(0).getLiteral();
                     match(Token.Type.IDENTIFIER);
-                    parameterTypeNames.add(typeName);
+                    parameterTypeNames.add(paramType);
                 } else {
-                    // ACCOUNT FOR MISSING TYPE EVEN THOUGH HAVE :
                     throw new ParseException("No type included", tokens.index);
                 }
+            }
+            else {
+                throw new ParseException("No type included", tokens.index);
             }
 
             if (peek(",")) {
                 match(",");
                 if (peek(")")) {
-                    throw new ParseException("trailing comma",
-                            tokens.index);
+                    throw new ParseException("trailing comma", tokens.index);
                 }
             } else {
                 if (!peek(")")) {
                     if (tokens.has(0)) {
-                        throw new ParseException("no , before )",
-                                tokens.index);
+                        throw new ParseException("no , before )", tokens.index);
                     }
                 }
             }
@@ -211,16 +327,19 @@ public final class Parser {
             }
         }
 
-        // catch : and the return type
+        // Handle explicit return type if present
         if (peek(":")) {
             match(":");
-
-            // Type
             if (peek(Token.Type.IDENTIFIER)) {
-                typeName = tokens.get(0).getLiteral();
+                returnTypeName = tokens.get(0).getLiteral();
                 match(Token.Type.IDENTIFIER);
+            } else {
+                throw new ParseException("Expected return type after :", tokens.index);
             }
         }
+//        else {
+//            throw new ParseException("Expected return type after method", tokens.index);
+//        }
 
         if (peek("DO")) {
             match("DO");
@@ -238,12 +357,7 @@ public final class Parser {
 
         if (peek("END")) {
             match("END");
-            // account for returnType of source method and params' types
-            if (typeName.isEmpty()){
-                return new Ast.Method(name, parameters, statements);
-            }
-            //   public Method(String name, List<String> parameters, List<String> parameterTypeNames, Optional<String> returnTypeName, List<Statement> statements) {
-            return new Ast.Method(name, parameters, parameterTypeNames, Optional.of(typeName), statements);
+            return new Ast.Method(name, parameters, parameterTypeNames, Optional.of(returnTypeName), statements);
         } else {
             if (tokens.has(0)) {
                 throw new ParseException("no END", tokens.index);
@@ -252,7 +366,6 @@ public final class Parser {
 
         throw new ParseException("NO METHOD PARSED", tokens.index);
     }
-
     /**
      * Parses the {@code statement} rule and delegates to the necessary method.
      * If the next tokens do not start a declaration, if, for, while, or return
@@ -299,7 +412,10 @@ public final class Parser {
             if (peek(Token.Type.IDENTIFIER)) {
                 typeName = tokens.get(0).getLiteral();
                 match(Token.Type.IDENTIFIER);
-
+            }
+        } else {
+            if (peek(";")) {
+                throw new ParseException("Expected Type with Field Declaration", tokens.index);
             }
         }
 
@@ -358,8 +474,16 @@ public final class Parser {
                 throw new ParseException("NO END, ", tokens.index);
             }
         }
+        else {
+            if (tokens.has(0)) { // index of the invalid token
+                throw new ParseException("Expected 'DO'", tokens.get(0).getIndex());
+            }
+            else {
+                throw new ParseException("Expected 'DO'", tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
+            }
+        }
 
-        throw new ParseException("NO DO, ", tokens.index);
+        // throw new ParseException("NO DO, ", tokens.index);
 
     }
 
@@ -708,10 +832,11 @@ public final class Parser {
             Ast.Expression expression = parseExpression();
             if (!peek(")")) {
                 if (!peek("+") && !peek("-") && !peek("*") && !peek("/") && !peek("&&") && !peek("||") && !peek("<") && !peek("<=") && !peek(">") && !peek(">=") && !peek("==") && !peek("!=")) {
-                    match(")");
-                    throw new ParseException("Expected closing parentheses ')'", tokens.index);
+                    // match(")");
+                    throw new ParseException("Expected closing parentheses ')'", tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
                 }
             }
+            match(")");
             return new Ast.Expression.Group(expression);
 
         } else {
