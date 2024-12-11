@@ -337,9 +337,9 @@ public final class Parser {
                 throw new ParseException("Expected return type after :", tokens.index);
             }
         }
-        else {
-            throw new ParseException("Expected return type after method", tokens.index);
-        }
+//        else {
+//            throw new ParseException("Expected return type after method", tokens.index);
+//        }
 
         if (peek("DO")) {
             match("DO");

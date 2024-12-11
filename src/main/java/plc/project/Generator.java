@@ -159,7 +159,15 @@ public final class Generator implements Ast.Visitor<Void> {
         print(ast.getName());
         print("(");
         for (int i = 0; i < ast.getParameters().size(); i++) {
-            print(ast.getParameterTypeNames().get(i));
+           // print(ast.getParameterTypeNames().get(i));
+            String paramType = ast.getParameterTypeNames().get(i);
+            if (paramType.equals("Decimal")) {
+                print("double");
+            } else if (paramType.equals("Integer")) {
+                print("int");
+            } else {
+                print(paramType);
+            }
             print(" ");
             print(ast.getParameters().get(i));
             if (i != ast.getParameters().size() - 1) {
@@ -174,6 +182,14 @@ public final class Generator implements Ast.Visitor<Void> {
                 newline(indent);
                 print(ast.getStatements().get(i));
             }
+            indent--;
+            newline(indent);
+        }
+
+        if (ast.getStatements().isEmpty() && ast.getName().equals("main") && ast.getReturnTypeName().isPresent() && ast.getReturnTypeName().get().equals("Integer")) {
+            indent++;
+            newline(indent);
+            print("return 0;");
             indent--;
             newline(indent);
         }
@@ -370,17 +386,41 @@ public final class Generator implements Ast.Visitor<Void> {
         return null;
     }
 
+//    @Override
+//    public Void visit(Ast.Statement.While ast) {
+//        print("while (");
+//        visit(ast.getCondition());
+//        print(") {");
+//        newline(++indent);
+//        for (Ast.Statement statement : ast.getStatements()) {
+//            visit(statement);
+//            newline(indent);
+//        }
+//        newline(--indent);
+//        print("}");
+//        return null;
+//    }
+
     @Override
     public Void visit(Ast.Statement.While ast) {
         print("while (");
         visit(ast.getCondition());
         print(") {");
-        newline(++indent);
-        for (Ast.Statement statement : ast.getStatements()) {
-            visit(statement);
+
+        if (!ast.getStatements().isEmpty()) {
+            indent++;
+            for (int i = 0; i < ast.getStatements().size(); i++) {
+                newline(indent);
+                visit(ast.getStatements().get(i));
+            }
+            indent--;
             newline(indent);
+        } else {
+            // Add newline and indentation for empty while loops
+            newline(indent);
+           // newline(indent);
         }
-        newline(--indent);
+
         print("}");
         return null;
     }
@@ -401,9 +441,9 @@ public final class Generator implements Ast.Visitor<Void> {
             print("'");
         }
         else if (ast.getType() == Environment.Type.STRING) {
-           // print("\"");
+            print("\"");
             print(ast.getLiteral());
-            //print("\"");
+            print("\"");
         }
         else if (ast.getType() == Environment.Type.DECIMAL) {
             BigDecimal temp = BigDecimal.class.cast(ast.getLiteral());
@@ -429,34 +469,43 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.Binary ast) {
-        // If the left expression is a string, wrap it in quotes
-        if (ast.getLeft().getType().equals(Environment.Type.STRING)) {
-            print("\"");
-        }
+//        // If the left expression is a string, wrap it in quotes
+//        if (ast.getLeft().getType().equals(Environment.Type.STRING)) {
+//            print("\"");
+//        }
+//
+//        // Visit and print the left expression
+//        visit(ast.getLeft());
+//
+//        // If the left expression was a string, close the quote
+//        if (ast.getLeft().getType().equals(Environment.Type.STRING)) {
+//            print("\"");
+//        }
+//
+//        // Print the operator (e.g., + or &&)
+//        print(" ", ast.getOperator(), " ");
+//
+//        // If the right expression is a string, wrap it in quotes
+//        if (ast.getRight().getType().equals(Environment.Type.STRING)) {
+//            print("\"");
+//        }
+//
+//        // Visit and print the right expression
+//        visit(ast.getRight());
+//
+//        // If the right expression was a string, close the quote
+//        if (ast.getRight().getType().equals(Environment.Type.STRING)) {
+//            print("\"");
+//        }
 
         // Visit and print the left expression
         visit(ast.getLeft());
 
-        // If the left expression was a string, close the quote
-        if (ast.getLeft().getType().equals(Environment.Type.STRING)) {
-            print("\"");
-        }
-
         // Print the operator (e.g., + or &&)
         print(" ", ast.getOperator(), " ");
 
-        // If the right expression is a string, wrap it in quotes
-        if (ast.getRight().getType().equals(Environment.Type.STRING)) {
-            print("\"");
-        }
-
         // Visit and print the right expression
         visit(ast.getRight());
-
-        // If the right expression was a string, close the quote
-        if (ast.getRight().getType().equals(Environment.Type.STRING)) {
-            print("\"");
-        }
 
         return null;
     }
@@ -479,29 +528,23 @@ public final class Generator implements Ast.Visitor<Void> {
         if (ast.getName().equals("print")) {
             print("System.out.println(");
 
-            // Handle the arguments, making sure that strings are wrapped in quotes
+            // Handle the arguments
             for (int i = 0; i < ast.getArguments().size(); i++) {
                 if (i > 0) print(", ");
-                Ast.Expression argument = ast.getArguments().get(i);
-
-                if (argument instanceof Ast.Expression.Literal && ((Ast.Expression.Literal) argument).getLiteral() instanceof String) {
-                    // Wrap string literals in quotes
-                    print("\"");
-                    visit(argument);  // Visit the literal expression
-                    print("\"");
-                } else {
-                    visit(argument);  // Visit other types of expressions
-                }
+                visit(ast.getArguments().get(i));  // Let the Literal visitor handle the quotes
             }
 
             print(")");
         } else {
-            // Handle other functions normally
+            // Handle other functions including string slice
             if (ast.getReceiver().isPresent()) {
                 visit(ast.getReceiver().get());
                 print(".");
             }
-            print(ast.getName(), "(");
+
+            String functionName = ast.getFunction().getJvmName();
+            print(functionName);
+            print("(");
 
             for (int i = 0; i < ast.getArguments().size(); i++) {
                 if (i > 0) print(", ");

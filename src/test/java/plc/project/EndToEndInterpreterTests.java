@@ -112,7 +112,7 @@ final class EndToEndInterpreterTests {
         return Stream.of(
                 // LET name;
                 Arguments.of("Declaration",
-                        "LET name;",
+                        "LET name: Integer;",
                         Environment.NIL.getValue(),
                         "name"
                 ),
